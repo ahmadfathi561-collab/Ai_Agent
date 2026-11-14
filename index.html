@@ -350,9 +350,9 @@
       return { status: 'success' };
     }
 
-    // تم ضبط الموديل على gemini-1.5-flash الأكثر استقراراً لتجنب مشاكل الضغط العالي
+    // تم تحديث الموديل إلى gemini-1.5-pro الأكثر مرونة واستقراراً مع واجهة v1beta
     async function sendGeminiRequestWithFallback(payload) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_KEY}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
