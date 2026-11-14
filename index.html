@@ -350,9 +350,9 @@
       return { status: 'success' };
     }
 
-    // تم تحديث الموديل إلى gemini-3.8-flash بناءً على طلب جوجل الأخير
+    // تم ضبط الموديل على gemini-2.5-flash بناءً على طلبك
     async function sendGeminiRequestWithFallback(payload) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${GEMINI_KEY}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -462,7 +462,7 @@
       }
 
       const finalText = (modelParts || []).map(p => p.text || '').join('\n');
-      chatHistory.push({ role: 'model', parts: [{ text: finalText }] });
+      chatHistory.push({ role: 'model', parts: [{ text: finalText }] );
       return finalText;
     }
 
