@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة تحكم الإدارة والتشغيل | QELVION Admin</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Cairo -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Cairo', 'sans-serif'] },
+          colors: {
+            bgDark: '#09090b',
+            cardDark: '#121217',
+            borderDark: '#27272a',
+            brandPurple: '#8b5cf6',
+            brandPurpleHover: '#7c3aed'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Theme CSS Variables & Enhanced Light Mode Contrast */
+    :root {
+      --bg-main: #09090b;
+      --bg-card: #121217;
+      --border-color: #27272a;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --accent-color: #8b5cf6;
+      --accent-hover: #7c3aed;
+      --input-bg: #09090b;
+      --table-head-bg: rgba(0,0,0,0.2);
+    }
+    body.theme-light {
+      --bg-main: #f1f5f9;
+      --bg-card: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --accent-color: #7c3aed;
+      --accent-hover: #6d28d9;
+      --input-bg: #f8fafc;
+      --table-head-bg: #e2e8f0;
+    }
+    body.theme-dark {
+      --bg-main: #09090b;
+      --bg-card: #121217;
+      --border-color: #27272a;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --accent-color: #8b5cf6;
+      --accent-hover: #7c3aed;
+      --input-bg: #09090b;
+      --table-head-bg: rgba(0,0,0,0.2);
+    }
+    body.theme-gold {
+      --bg-main: #0c0a09;
+      --bg-card: #1c1917;
+      --border-color: #292524;
+      --text-main: #f5f5f4;
+      --text-muted: #a8a29e;
+      --accent-color: #d97706;
+      --accent-hover: #b45309;
+      --input-bg: #0c0a09;
+      --table-head-bg: rgba(0,0,0,0.2);
+    }
+
+    body { background-color: var(--bg-main); color: var(--text-main); font-family: 'Cairo', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
+    .bg-cardDark { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+    .bg-bgDark { background-color: var(--input-bg) !important; border-color: var(--border-color) !important; color: var(--text-main) !important; }
+    .border-borderDark { border-color: var(--border-color) !important; }
+    .text-zinc-400 { color: var(--text-muted) !important; }
+    input::placeholder, textarea::placeholder { color: var(--text-muted) !important; opacity: 0.8; }
+    
+    /* Specific Light Mode Table & Text Fixes for Maximum Clarity */
+    body.theme-light table thead { background-color: var(--table-head-bg) !important; color: #1e293b !important; font-weight: 700; }
+    body.theme-light table th { color: #1e293b !important; }
+    body.theme-light td { color: #0f172a !important; }
+    body.theme-light .text-zinc-400, body.theme-light p.text-xs { color: #334155 !important; }
+    body.theme-light input, body.theme-light select, body.theme-light textarea { color: #0f172a !important; border-color: #94a3b8 !important; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col theme-dark">
+
+  <!-- Admin Header -->
+  <header class="h-16 border-b border-borderDark bg-cardDark px-6 flex items-center justify-between shrink-0 shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-500">
+        <i data-lucide="shield-check" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-base md:text-lg flex items-center gap-2">
+          لوحة تحكم الإدارة وخطوط السير
+          <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-medium">تحديث تلقائي لايف</span>
+        </h1>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <!-- Theme Switcher -->
+      <div class="flex items-center bg-bgDark border border-borderDark rounded-xl p-1 gap-1">
+        <button onclick="setTheme('light')" id="themeBtnLight" title="الثيم الفاتح" class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-zinc-400 hover:text-white">☀️ فاتح</button>
+        <button onclick="setTheme('dark')" id="themeBtnDark" title="الثيم الداكن" class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-zinc-400 hover:text-white">🌙 داكن</button>
+        <button onclick="setTheme('gold')" id="themeBtnGold" title="الثيم الذهبي" class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-zinc-400 hover:text-white">👑 ذهبي</button>
+      </div>
+
+      <button onclick="fetchAllData()" class="px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold flex items-center gap-1.5 transition text-white border border-borderDark">
+        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+        <span>تحديث الآن</span>
+      </button>
+      <button onclick="toggleConfigModal()" class="px-3.5 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30 text-xs font-bold flex items-center gap-1.5 transition">
+        <i data-lucide="key" class="w-4 h-4"></i>
+        <span>إعدادات الربط</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <div class="border-b border-borderDark bg-cardDark px-6 pt-3 flex gap-8">
+    <button onclick="switchTab('bookings')" id="tab-bookings" class="pb-3 text-sm font-bold border-b-2 border-purple-500 text-purple-500 flex items-center gap-2 transition">
+      <i data-lucide="calendar-check" class="w-4 h-4"></i>
+      جدول الحجوزات واللوكيشن (Live)
+    </button>
+    <button onclick="switchTab('interactions')" id="tab-interactions" class="pb-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-2 transition">
+      <i data-lucide="message-square-warning" class="w-4 h-4"></i> الشكاوى والطلبات
+    </button>
+    <button onclick="switchTab('conversations')" id="tab-conversations" class="pb-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-2 transition">
+      <i data-lucide="messages-square" class="w-4 h-4"></i> سجل المحادثات
+    </button>
+    <button onclick="switchTab('catalog')" id="tab-catalog" class="pb-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-2 transition">
+      <i data-lucide="tag" class="w-4 h-4"></i>
+      قائمة الأسعار والخدمات
+    </button>
+    <button onclick="switchTab('zones')" id="tab-zones" class="pb-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-2 transition">
+      <i data-lucide="map" class="w-4 h-4"></i>
+      تقسيم القطاعات الجغرافية
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6">
+    
+    <!-- TAB 1: Bookings -->
+    <div id="view-bookings" class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-sm">
+          <p class="text-xs text-zinc-400">إجمالي الأوردرات المسجلة</p>
+          <h3 id="statTotalBookings" class="text-3xl font-extrabold mt-1">0</h3>
+        </div>
+        <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-sm">
+          <p class="text-xs text-zinc-400">إجمالي المبيعات المحجوزة</p>
+          <h3 id="statTotalRevenue" class="text-3xl font-extrabold mt-1 text-emerald-400">0 ج.م</h3>
+        </div>
+        <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-sm">
+          <p class="text-xs text-zinc-400">حالة الربط مع شات العملاء</p>
+          <h3 class="text-xl font-extrabold mt-2 text-purple-400 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+            متصل ويستقبل الحجوزات تلقائياً
+          </h3>
+        </div>
+      </div>
+
+      <div class="bg-cardDark border border-borderDark rounded-2xl overflow-hidden shadow-sm">
+        <div class="p-4 border-b border-borderDark flex items-center justify-between">
+          <h3 class="font-bold text-sm">سجل الحجوزات وخط سير التيم</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-right text-sm">
+            <thead class="bg-zinc-900/40 text-zinc-400 text-xs">
+              <tr>
+                <th class="py-3.5 px-4">العميل ورقم الهاتف</th>
+                <th class="py-3.5 px-4">المنطقة واللوكيشن الدقيق</th>
+                <th class="py-3.5 px-4">الموعد والفترة</th>
+                <th class="py-3.5 px-4">المفروشات المطلوبة</th>
+                <th class="py-3.5 px-4">الإجمالي</th>
+                <th class="py-3.5 px-4">الحالة</th>
+                <th class="py-3.5 px-4">إدارة</th>
+              </tr>
+            </thead>
+            <tbody id="bookingsTableBody" class="divide-y divide-borderDark"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Customer Interactions -->
+    <div id="view-interactions" class="hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="bg-cardDark border border-borderDark rounded-2xl p-4"><p class="text-xs text-zinc-400">طلبات جديدة</p><h3 id="statNewInteractions" class="text-2xl font-extrabold text-amber-400">0</h3></div>
+        <div class="bg-cardDark border border-borderDark rounded-2xl p-4"><p class="text-xs text-zinc-400">قيد المتابعة</p><h3 id="statOpenInteractions" class="text-2xl font-extrabold text-sky-400">0</h3></div>
+        <div class="bg-cardDark border border-borderDark rounded-2xl p-4"><p class="text-xs text-zinc-400">تم الحل</p><h3 id="statResolvedInteractions" class="text-2xl font-extrabold text-emerald-400">0</h3></div>
+      </div>
+      <div class="bg-cardDark border border-borderDark rounded-2xl p-4 flex flex-col md:flex-row gap-3 shadow-sm">
+        <input id="interactionSearch" oninput="renderInteractions(window.twInteractions || [])" placeholder="بحث بالاسم أو الهاتف أو التفاصيل..." class="flex-1 bg-bgDark border border-borderDark rounded-xl px-3 py-2 text-xs focus:outline-none" />
+        <select id="interactionStatusFilter" onchange="renderInteractions(window.twInteractions || [])" class="bg-bgDark border border-borderDark rounded-xl px-3 py-2 text-xs focus:outline-none"><option value="all">كل الحالات</option><option value="new">جديدة</option><option value="reviewing">قيد المراجعة</option><option value="contacting">جاري التواصل</option><option value="technical_team">محولة للفريق الفني</option><option value="resolved">تم الحل</option><option value="closed">مغلقة</option></select>
+      </div>
+      <div id="interactionsContainer" class="space-y-3"></div>
+    </div>
+
+    <!-- TAB: Conversation Logs -->
+    <div id="view-conversations" class="hidden space-y-4">
+      <div class="bg-cardDark border border-borderDark rounded-2xl p-4 flex flex-col md:flex-row gap-3 shadow-sm">
+        <input id="conversationSearch" oninput="renderConversations(window.twConversations || [])" placeholder="بحث في رسائل العملاء والبوت..." class="flex-1 bg-bgDark border border-borderDark rounded-xl px-3 py-2 text-xs focus:outline-none" />
+        <span class="text-xs text-zinc-400 self-center">سجل رسائل العميل وردود البوت وعمليات الأدوات</span>
+        <button type="button" onclick="refreshConversations()" class="bg-zinc-800 hover:bg-zinc-700 text-white border border-borderDark rounded-xl px-4 py-2 text-xs font-bold transition">تحديث المحادثات</button>
+      </div>
+      <div id="conversationsContainer" class="space-y-3"></div>
+    </div>
+
+    <!-- TAB 2: Catalog -->
+    <div id="view-catalog" class="hidden space-y-6">
+      <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-sm">
+        <h3 class="font-bold text-sm mb-3 text-purple-400">إضافة خدمة جديدة (تظهر فوراً للبوت في صفحة العميل)</h3>
+        <form onsubmit="addServiceItem(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <input id="newItemKey" type="text" placeholder="كود بالإنجليزي (مثال: salon_set)" required class="bg-bgDark border border-borderDark rounded-xl px-3.5 py-2.5 text-xs focus:outline-none" />
+          <input id="newItemName" type="text" placeholder="اسم القطعة بالعربي (مثال: طقم صالون)" required class="bg-bgDark border border-borderDark rounded-xl px-3.5 py-2.5 text-xs focus:outline-none" />
+          <input id="newItemPrice" type="number" placeholder="السعر بالجنيه (مثال: 750)" required class="bg-bgDark border border-borderDark rounded-xl px-3.5 py-2.5 text-xs focus:outline-none" />
+          <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-4 py-2.5 text-xs font-bold transition shadow-sm">
+            + إضافة للسيستم
+          </button>
+        </form>
+      </div>
+
+      <div class="bg-cardDark border border-borderDark rounded-2xl overflow-hidden shadow-sm">
+        <table class="w-full text-right text-sm">
+          <thead class="bg-zinc-900/40 text-zinc-400 text-xs">
+            <tr>
+              <th class="py-3.5 px-4">كود البرمجة</th>
+              <th class="py-3.5 px-4">اسم الخدمة</th>
+              <th class="py-3.5 px-4">السعر الحالي</th>
+              <th class="py-3.5 px-4">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="catalogTableBody" class="divide-y divide-borderDark"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: Zones -->
+    <div id="view-zones" class="hidden space-y-4">
+      <div id="zonesContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    </div>
+
+  </main>
+
+  <!-- In-app action modal -->
+  <div id="appActionModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center z-[70] p-4" onclick="if(event.target===this)closeAppModal()">
+    <div class="bg-cardDark border border-borderDark rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-borderDark flex items-center justify-between gap-3">
+        <div><h3 id="appModalTitle" class="font-extrabold text-base"></h3><p id="appModalDescription" class="text-xs text-zinc-400 mt-1"></p></div>
+        <button type="button" onclick="closeAppModal()" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300">✕</button>
+      </div>
+      <div id="appModalBody" class="p-5 space-y-3 max-h-[65vh] overflow-y-auto"></div>
+      <div id="appModalFooter" class="p-4 border-t border-borderDark flex justify-end gap-2"></div>
+    </div>
+  </div>
+  <div id="appToast" class="fixed bottom-5 left-5 z-[90] hidden max-w-sm rounded-xl border px-4 py-3 text-sm shadow-xl"></div>
+
+  <!-- API Keys Modal (في لوحة الإدارة فقط) -->
+  <div id="configModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-cardDark border border-borderDark rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-base">إعدادات الربط (Supabase & Gemini API)</h3>
+        <button onclick="toggleConfigModal()" class="text-zinc-400 hover:text-white">✕</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-zinc-400 mb-1">Supabase Project URL</label>
+          <input id="cfgSupabaseUrl" type="text" class="w-full bg-bgDark border border-borderDark rounded-lg px-3 py-2 font-mono focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-zinc-400 mb-1">Supabase Publishable / Anon Key</label>
+          <input id="cfgSupabaseKey" type="text" class="w-full bg-bgDark border border-borderDark rounded-lg px-3 py-2 font-mono focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-zinc-400 mb-1">Google Gemini API Key</label>
+          <input id="cfgGeminiKey" type="text" class="w-full bg-bgDark border border-borderDark rounded-lg px-3 py-2 font-mono focus:outline-none" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="saveConfig()" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg text-xs font-bold transition">
+          حفظ الإعدادات
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* Theme Management */
+    function setTheme(theme) {
+      document.body.className = document.body.className.replace(/theme-(light|dark|gold)/g, '').trim();
+      document.body.classList.add(`theme-${theme}`);
+      localStorage.setItem('admin_theme', theme);
+      
+      ['light', 'dark', 'gold'].forEach(t => {
+        const btn = document.getElementById(`themeBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (btn) {
+          if (t === theme) {
+            btn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 bg-purple-600 text-white shadow-sm';
+          } else {
+            btn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-zinc-400 hover:text-white';
+          }
+        }
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('admin_theme') || 'dark';
+      setTheme(savedTheme);
+    });
+
+    let SUPABASE_URL = localStorage.getItem('SB_URL') || 'https://jlaczyfdaxcdevcozcnx.supabase.co';
+    let SUPABASE_KEY = localStorage.getItem('SB_KEY') || 'sb_publishable_vih4Lf_VGHooa_IxoicuCA_X0Bg2ESc';
+    let GEMINI_KEY   = localStorage.getItem('GM_KEY') || 'AQ.Ab8RN6K5r2fgj6JVAUTz0bWdiw7S1WHWAHuv2Fy6jc248gIEoA';
+
+    let supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function fetchAllData() {
+      const { data: bookings } = await supabaseClient.from('bookings').select('*').order('created_at', { ascending: false });
+      renderBookings(bookings || []);
+
+      const { data: catalog } = await supabaseClient.from('services_catalog').select('*').order('price', { ascending: false });
+      renderCatalog(catalog || []);
+
+      const { data: zones } = await supabaseClient.from('zones').select('*');
+      renderZones(zones || []);
+
+      const { data: interactions, error: interactionsError } = await supabaseClient.from('customer_interactions').select('*').order('created_at', { ascending: false }).limit(300);
+      window.twInteractions = interactions || [];
+      if (!interactionsError) renderInteractions(window.twInteractions);
+      else document.getElementById('interactionsContainer').innerHTML = `<div class="text-amber-400 text-xs p-4 space-y-2"><b>تعذر تحميل الشكاوى والطلبات.</b><p dir="ltr" class="text-left break-all text-zinc-400">${escapeHtml(interactionsError.message || interactionsError.code || 'Unknown error')}</p></div>`;
+
+      if (document.getElementById('view-conversations')?.classList.contains('hidden')) {
+        await fetchConversationData();
+      }
+    }
+
+    function renderBookings(bookings) {
+      const activeBookings = bookings.filter(b => b.status === 'confirmed');
+      document.getElementById('statTotalBookings').innerText = activeBookings.length;
+      const totalRev = activeBookings.reduce((sum, b) => sum + Number(b.total_price || 0), 0);
+      document.getElementById('statTotalRevenue').innerText = `${totalRev.toLocaleString()} ج.م`;
+
+      const tbody = document.getElementById('bookingsTableBody');
+      if (!bookings.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-zinc-500">لا توجد حجوزات حتى الآن.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = bookings.map(b => {
+        const legacyMatch = String(b.area || '').match(/https?:\/\/[^\s]+/i);
+        const coordinateUrl = (b.latitude !== null && b.latitude !== undefined && b.longitude !== null && b.longitude !== undefined && Number.isFinite(Number(b.latitude)) && Number.isFinite(Number(b.longitude))) ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${b.latitude},${b.longitude}`)}` : null;
+        const mapUrl = coordinateUrl || b.maps_url || (legacyMatch ? legacyMatch[0].replace(/[),]+$/, '') : null);
+        const cleanSummary = b.items_summary || '';
+        const mapBtn = mapUrl
+          ? `<a href="${escapeHtml(mapUrl)}" target="_blank" rel="noopener" class="mt-1.5 inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/30 transition">🧭 فتح اتجاهات موقع العميل</a>`
+          : `<span class="text-[11px] text-zinc-500 block mt-1">لا يوجد رابط خريطة مرفق</span>`;
+
+        return `
+          <tr class="hover:bg-zinc-500/10 transition">
+            <td class="py-3.5 px-4">
+              <div class="font-bold">${b.client_name}</div>
+              <div class="text-xs text-zinc-400 font-mono">${b.client_phone}</div>
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="px-2.5 py-1 rounded-full text-xs bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 font-bold">${b.area}</span>
+              <div class="text-xs text-zinc-400 mt-1">${escapeHtml(b.detailed_address || '')}</div><div>${mapBtn}</div>
+            </td>
+            <td class="py-3.5 px-4">
+              <div class="font-bold">${b.booking_date}</div>
+              <div class="text-xs text-amber-500 dark:text-amber-400">${b.time_slot}</div>
+            </td>
+            <td class="py-3.5 px-4 text-xs">${cleanSummary}</td>
+            <td class="py-3.5 px-4 font-extrabold text-emerald-600 dark:text-emerald-400">${b.total_price} ج.م</td>
+            <td class="py-3.5 px-4">
+              <select onchange="updateBookingStatus('${b.id}',this.value)" class="bg-bgDark border border-borderDark rounded-lg px-2 py-1.5 text-xs focus:outline-none">
+                <option value="confirmed" ${b.status==='confirmed'?'selected':''}>مؤكد</option>
+                <option value="pending" ${b.status==='pending'?'selected':''}>معلّق</option>
+                <option value="cancelled" ${b.status==='cancelled'?'selected':''}>ملغي</option>
+                <option value="completed" ${b.status==='completed'?'selected':''}>مكتمل</option>
+              </select>
+            </td>
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              <button onclick="editBooking('${b.id}')" class="text-xs text-sky-600 dark:text-sky-400 hover:underline font-bold ml-2">تعديل</button>
+              <button onclick="deleteBooking('${b.id}')" class="text-xs text-rose-600 dark:text-rose-400 hover:underline font-bold">حذف</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function updateBookingStatus(id,status) {
+      if(status==='cancelled') {
+        openConfirmModal('تأكيد إلغاء الحجز','هل أنت متأكد من إلغاء هذا الحجز؟',async()=>{
+          const {error}=await supabaseClient.from('bookings').update({status}).eq('id',id);
+          if(error) showToast('تعذر تحديث حالة الحجز: '+error.message,'error'); else {showToast('تم تحديث حالة الحجز بنجاح','success');fetchAllData();}
+        });
+        return;
+      }
+      const {error}=await supabaseClient.from('bookings').update({status}).eq('id',id);
+      if(error) showToast('تعذر تحديث حالة الحجز: '+error.message,'error'); else fetchAllData();
+    }
+
+    async function editBooking(id) {
+      const {data,error}=await supabaseClient.from('bookings').select('*').eq('id',id).single();
+      if(error||!data){showToast('تعذر تحميل بيانات الحجز. '+(error?.message||''),'error');return;}
+      openAppModal('تعديل بيانات الحجز','عدّل البيانات المطلوبة ثم اضغط حفظ التعديلات.',`
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          ${appField('editArea','المنطقة',data.area||'')}
+          ${appField('editAddress','العنوان التفصيلي',data.detailed_address||'')}
+          ${appField('editMaps','رابط Google Maps',data.maps_url||'')}
+          ${appField('editDate','تاريخ الحجز',data.booking_date||'','date')}
+          ${appField('editTime','الفترة / الموعد',data.time_slot||'')}
+          ${appField('editTotal','الإجمالي بالجنيه',data.total_price??'','number')}
+          <div class="sm:col-span-2"><label class="block text-xs text-zinc-400 mb-1">تفاصيل المفروشات</label><textarea id="editItems" rows="3" class="w-full bg-bgDark border border-borderDark rounded-xl px-3 py-2 text-sm focus:outline-none">${escapeHtml(data.items_summary||'')}</textarea></div>
+        </div>`, 'حفظ التعديلات',async()=>{
+          const area=document.getElementById('editArea').value.trim(), booking_date=document.getElementById('editDate').value.trim(), time_slot=document.getElementById('editTime').value.trim(), total=document.getElementById('editTotal').value;
+          if(!area||!booking_date||!time_slot||!Number.isFinite(Number(total))||Number(total)<0){showToast('راجع المنطقة والتاريخ والموعد والسعر.','error');return false;}
+          const update={area,detailed_address:document.getElementById('editAddress').value.trim()||null,maps_url:document.getElementById('editMaps').value.trim()||null,booking_date,time_slot,items_summary:document.getElementById('editItems').value.trim(),total_price:Number(total)};
+          const result=await supabaseClient.from('bookings').update(update).eq('id',id);
+          if(result.error){showToast('تعذر حفظ التعديلات: '+result.error.message,'error');return false;}
+          closeAppModal();showToast('تم حفظ تعديلات الحجز بنجاح','success');fetchAllData();
+        });
+    }
+
+    async function deleteBooking(id) {
+      openConfirmModal('حذف بيانات الحجز','سيتم حذف هذا الحجز نهائياً. هل تريد المتابعة؟',async()=>{
+        const {error}=await supabaseClient.from('bookings').delete().eq('id',id);
+        if(error) showToast('تعذر حذف الحجز: '+error.message,'error'); else {showToast('تم حذف الحجز بنجاح','success');fetchAllData();}
+      },'حذف نهائياً');
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+
+    const interactionStatusLabels = {new:'جديدة', reviewing:'قيد المراجعة', contacting:'جاري التواصل', technical_team:'محولة للفريق الفني', resolved:'تم الحل', closed:'مغلقة'};
+    const categoryLabels = {cleaning_complaint:'شكوى تنظيف', technician_complaint:'شكوى فني', response_complaint:'مشكلة في الرد', reschedule_request:'طلب تعديل موعد', callback_request:'طلب معاودة اتصال', extra_request:'طلب إضافي', general_note:'ملاحظة عامة', other:'أخرى'};
+
+    function renderInteractions(items) {
+      const q = (document.getElementById('interactionSearch')?.value || '').toLowerCase();
+      const filter = document.getElementById('interactionStatusFilter')?.value || 'all';
+      document.getElementById('statNewInteractions').textContent = items.filter(x=>x.status==='new').length;
+      document.getElementById('statOpenInteractions').textContent = items.filter(x=>!['new','resolved','closed'].includes(x.status)).length;
+      document.getElementById('statResolvedInteractions').textContent = items.filter(x=>['resolved','closed'].includes(x.status)).length;
+      const filtered = items.filter(x => (filter==='all'||x.status===filter) && [x.customer_name,x.customer_phone,x.subject,x.details].join(' ').toLowerCase().includes(q));
+      const box = document.getElementById('interactionsContainer');
+      if (!filtered.length) { box.innerHTML='<div class="bg-cardDark border border-borderDark rounded-2xl p-8 text-center text-zinc-500 text-sm">لا توجد شكاوى أو طلبات مطابقة.</div>'; return; }
+      box.innerHTML = filtered.map(x => `<article class="bg-cardDark border border-borderDark rounded-2xl p-4 space-y-3 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-2"><div><div class="flex flex-wrap gap-2 items-center"><strong class="text-sm">${escapeHtml(x.subject)}</strong><span class="text-[11px] rounded-full px-2 py-1 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">${escapeHtml(categoryLabels[x.category]||x.category||'أخرى')}</span><span class="text-[11px] rounded-full px-2 py-1 ${x.priority==='urgent'?'bg-rose-500/15 text-rose-600 dark:text-rose-300':x.priority==='high'?'bg-amber-500/15 text-amber-600 dark:text-amber-300':'bg-zinc-500/20 text-zinc-700 dark:text-zinc-300'}">أولوية ${escapeHtml(x.priority||'normal')}</span></div><p class="text-xs text-zinc-400 mt-2">${escapeHtml(x.customer_name||'بدون اسم')} · ${escapeHtml(x.customer_phone||'بدون رقم')} · ${x.created_at?new Date(x.created_at).toLocaleString('ar-EG'):''}</p></div>
+        <select onchange="updateInteractionStatus('${x.id}',this.value)" class="bg-bgDark border border-borderDark rounded-lg px-3 py-2 text-xs focus:outline-none">${Object.entries(interactionStatusLabels).map(([k,v])=>`<option value="${k}" ${x.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
+        <p class="text-sm leading-7 whitespace-pre-wrap">${escapeHtml(x.details)}</p>
+        <div class="flex flex-wrap justify-end gap-4"><button onclick="addInteractionNote('${x.id}')" class="text-xs text-purple-600 dark:text-purple-400 hover:underline">إضافة ملاحظة إدارية</button><button onclick="deleteInteraction('${x.id}')" class="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-300 hover:underline">حذف الشكوى</button></div>
+        ${x.admin_notes?`<div class="border-t border-borderDark pt-2 text-xs text-zinc-400">ملاحظات الإدارة: ${escapeHtml(x.admin_notes)}</div>`:''}
+      </article>`).join('');
+    }
+
+    async function updateInteractionStatus(id,status) {
+      const {error}=await supabaseClient.from('customer_interactions').update({status,updated_at:new Date().toISOString()}).eq('id',id);
+      if(error) showToast('تعذر تحديث الحالة: '+error.message,'error'); else fetchAllData();
+    }
+    async function deleteInteraction(id) {
+      const item=(window.twInteractions||[]).find(x=>x.id===id);
+      if(!item){showToast('تعذر العثور على الشكوى. حدّث الصفحة وحاول مرة أخرى.','error');return;}
+      openConfirmModal('تأكيد حذف الشكوى',`هل أنت متأكد من حذف شكوى «${escapeHtml(item.subject||'بدون عنوان')}» نهائياً؟ لا يمكن التراجع عن هذا الإجراء.`,async()=>{
+        const {error}=await supabaseClient.from('customer_interactions').delete().eq('id',id);
+        if(error){showToast('تعذر حذف الشكوى: '+error.message,'error');return false;}
+        closeAppModal();
+        showToast('تم حذف الشكوى بنجاح','success');
+        await fetchAllData();
+      },'حذف نهائياً');
+    }
+    async function addInteractionNote(id) {
+      openAppModal('إضافة ملاحظة إدارية','اكتب ملاحظة داخلية لمتابعة الشكوى أو الطلب.',`<label class="block text-xs text-zinc-400 mb-1">الملاحظة</label><textarea id="adminNoteInput" rows="5" maxlength="2000" placeholder="اكتب الملاحظة هنا..." class="w-full bg-bgDark border border-borderDark rounded-xl px-3 py-3 text-sm focus:outline-none"></textarea><div class="text-left text-[11px] text-zinc-400"><span id="adminNoteCount">0</span> / 2000</div>`, 'حفظ الملاحظة',async()=>{
+        const note=document.getElementById('adminNoteInput').value.trim();if(!note){showToast('اكتب الملاحظة أولاً.','error');return false;}
+        const current=(window.twInteractions||[]).find(x=>x.id===id);const notes=[current?.admin_notes,note].filter(Boolean).join('\n---\n');
+        const {error}=await supabaseClient.from('customer_interactions').update({admin_notes:notes,updated_at:new Date().toISOString()}).eq('id',id);
+        if(error){showToast('تعذر حفظ الملاحظة: '+error.message,'error');return false;}closeAppModal();showToast('تم حفظ الملاحظة بنجاح','success');fetchAllData();
+      });
+      setTimeout(()=>{const el=document.getElementById('adminNoteInput');if(el)el.addEventListener('input',()=>document.getElementById('adminNoteCount').textContent=el.value.length);},0);
+    }
+
+    async function fetchConversationData() {
+      const { data: conversations, error } = await supabaseClient
+        .from('conversation_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (error) {
+        document.getElementById('conversationsContainer').innerHTML = `<div class="text-amber-400 text-xs p-4 space-y-2"><b>تعذر تحميل سجل المحادثات.</b><p dir="ltr" class="text-left break-all text-zinc-400">${escapeHtml(error.message || error.code || 'Unknown error')}</p></div>`;
+        return;
+      }
+      window.twConversations = conversations || [];
+      renderConversations(window.twConversations);
+    }
+
+    async function refreshConversations() {
+      const button = document.querySelector('#view-conversations button[onclick="refreshConversations()"]');
+      if (button) { button.disabled = true; button.textContent = 'جارٍ التحديث...'; }
+      try {
+        await fetchConversationData();
+        showToast('تم تحديث سجل المحادثات', 'success');
+      } finally {
+        if (button) { button.disabled = false; button.textContent = 'تحديث المحادثات'; }
+      }
+    }
+
+    async function deleteConversationSession(encodedSessionId) {
+      const sessionId = decodeURIComponent(encodedSessionId);
+      const logs = (window.twConversations || []).filter(r => (r.session_id || '__no_session__') === sessionId);
+      if (!logs.length) {
+        showToast('تعذر العثور على المحادثة. حدّث السجل وحاول مرة أخرى.', 'error');
+        return;
+      }
+      const sessionLabel = sessionId === '__no_session__' ? 'بدون رقم جلسة' : sessionId.slice(0, 18);
+      openConfirmModal(
+        'تأكيد حذف المحادثة',
+        `هل أنت متأكد من حذف المحادثة «${escapeHtml(sessionLabel)}»؟ سيتم حذف جميع الرسائل والعمليات المسجلة داخلها نهائياً.`,
+        async () => {
+          let request = supabaseClient.from('conversation_logs').delete();
+          request = sessionId === '__no_session__'
+            ? request.is('session_id', null)
+            : request.eq('session_id', sessionId);
+          const { error } = await request;
+          if (error) {
+            showToast('تعذر حذف المحادثة: ' + error.message, 'error');
+            return false;
+          }
+          closeAppModal();
+          window.twConversations = (window.twConversations || []).filter(r => (r.session_id || '__no_session__') !== sessionId);
+          renderConversations(window.twConversations);
+          showToast('تم حذف المحادثة بنجاح', 'success');
+        },
+        'حذف المحادثة نهائياً'
+      );
+    }
+
+    function renderConversations(rows) {
+      const q=(document.getElementById('conversationSearch')?.value||'').toLowerCase();
+      const filtered=rows.filter(r=>[r.message,r.customer_name,r.customer_phone,r.tool_name,r.event_type].join(' ').toLowerCase().includes(q));
+      const groups={};
+      filtered.forEach(r=>(groups[r.session_id || '__no_session__']??=[]).push(r));
+      const box=document.getElementById('conversationsContainer');
+      const sessions=Object.entries(groups);
+      if(!sessions.length){box.innerHTML='<div class="bg-cardDark border border-borderDark rounded-2xl p-8 text-center text-zinc-500 text-sm">لا توجد محادثات مسجلة بعد.</div>';return;}
+      box.innerHTML=sessions.map(([id,logs])=>{
+        const encodedId=encodeURIComponent(id);
+        const sessionTitle=id==='__no_session__'?'بدون رقم جلسة':id.slice(0,13);
+        const firstDate=logs[logs.length-1]?.created_at?new Date(logs[logs.length-1].created_at).toLocaleString('ar-EG'):'';
+        return `<details class="bg-cardDark border border-borderDark rounded-2xl overflow-hidden shadow-sm"><summary class="cursor-pointer p-4 flex flex-wrap justify-between items-center gap-2"><span class="font-bold text-sm">محادثة ${escapeHtml(sessionTitle)}</span><span class="text-xs text-zinc-400">${logs.length} سجل · ${firstDate}</span></summary><div class="border-t border-borderDark p-4 space-y-3"><div class="flex justify-end"><button type="button" onclick="deleteConversationSession('${encodedId}')" class="text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-500/30 px-3 py-2 rounded-lg">حذف المحادثة</button></div>${logs.slice().reverse().map(r=>`<div class="rounded-xl p-3 ${r.speaker==='customer'?'bg-indigo-500/10':r.speaker==='assistant'?'bg-zinc-500/10':'bg-amber-500/10'}"><div class="flex justify-between gap-2 text-[10px] text-zinc-400 mb-1"><b>${r.speaker==='customer'?'العميل':r.speaker==='assistant'?'أحمد / AI':r.speaker==='tool'?'تنفيذ أداة':'النظام'}</b><span>${r.created_at?new Date(r.created_at).toLocaleTimeString('ar-EG'):''} ${r.tool_name?'· '+escapeHtml(r.tool_name):''}</span></div><p class="text-xs whitespace-pre-wrap break-words leading-6">${escapeHtml(r.message)}</p></div>`).join('')}</div></details>`;
+      }).join('');
+    }
+
+    function renderCatalog(catalog) {
+      const tbody = document.getElementById('catalogTableBody');
+      if(!catalog.length){tbody.innerHTML='<tr><td colspan="4" class="p-8 text-center text-zinc-500">لا توجد خدمات مسجلة حالياً.</td></tr>';return;}
+      tbody.innerHTML = catalog.map(item => `
+        <tr class="hover:bg-zinc-500/10 transition">
+          <td class="py-3 px-4 font-mono text-xs text-zinc-400">${escapeHtml(item.item_key)}</td>
+          <td class="py-3 px-4 font-bold">${escapeHtml(item.item_name_ar)}</td>
+          <td class="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold">${escapeHtml(item.price)} ج.م</td>
+          <td class="py-3 px-4 whitespace-nowrap space-x-1 space-x-reverse">
+            <button onclick="updatePrice('${item.id}', '${escapeHtml(item.item_name_ar).replace(/'/g, '&#39;')}', ${Number(item.price)})" class="text-xs bg-zinc-800 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg transition">تعديل السعر</button>
+            <button onclick="deleteService('${item.id}')" class="text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-500/30 px-3 py-1.5 rounded-lg transition">حذف الخدمة</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderZones(zones) {
+      const box = document.getElementById('zonesContainer');
+      box.innerHTML = zones.map(z => `
+        <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-sm">
+          <h4 class="font-bold text-purple-600 dark:text-purple-400 text-sm">${z.zone_name}</h4>
+          <div class="flex flex-wrap gap-1.5 mt-3">
+            ${(z.covered_areas || []).map(a => `<span class="px-2.5 py-1 rounded-lg bg-zinc-500/10 border border-borderDark text-xs">${a}</span>`).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function updatePrice(id, name, oldPrice) {
+      openAppModal('تعديل سعر الخدمة',`تحديث سعر خدمة: ${escapeHtml(name)}`,`${appField('newServicePrice','السعر الجديد بالجنيه',oldPrice,'number')}`,'حفظ السعر',async()=>{
+        const value=document.getElementById('newServicePrice').value;
+        if(value===''||!Number.isFinite(Number(value))||Number(value)<0){showToast('أدخل سعراً صحيحاً.','error');return false;}
+        const {error}=await supabaseClient.from('services_catalog').update({price:Number(value)}).eq('id',id);
+        if(error){showToast('تعذر تحديث السعر: '+error.message,'error');return false;}
+        closeAppModal();showToast('تم تحديث السعر بنجاح','success');fetchAllData();
+      });
+    }
+
+    async function deleteService(id) {
+      const {data,error}=await supabaseClient.from('services_catalog').select('item_name_ar,item_key').eq('id',id).single();
+      if(error||!data){showToast('تعذر تحميل بيانات الخدمة. '+(error?.message||''),'error');return;}
+      openConfirmModal('تأكيد حذف الخدمة',`هل أنت متأكد من حذف خدمة «${escapeHtml(data.item_name_ar)}» من قائمة الأسعار؟ لن تظهر بعد ذلك ضمن الخدمات المتاحة للبوت.`,async()=>{
+        const {error:deleteError}=await supabaseClient.from('services_catalog').delete().eq('id',id);
+        if(deleteError){showToast('تعذر حذف الخدمة: '+deleteError.message,'error');return;}
+        closeAppModal();
+        switchTab('catalog');
+        showToast('تم حذف الخدمة من قائمة الأسعار بنجاح','success');
+        await fetchAllData();
+      },'حذف الخدمة');
+    }
+
+    async function addServiceItem(e) {
+      e.preventDefault();
+      const item_key = document.getElementById('newItemKey').value.trim();
+      const item_name_ar = document.getElementById('newItemName').value.trim();
+      const price = Number(document.getElementById('newItemPrice').value);
+      if(!item_key||!item_name_ar||!Number.isFinite(price)||price<0){showToast('راجع كود الخدمة والاسم والسعر.','error');return;}
+      const {error}=await supabaseClient.from('services_catalog').insert([{ item_key, item_name_ar, price }]);
+      if(error){showToast('تعذر إضافة الخدمة: '+error.message,'error');return;}
+      e.target.reset();showToast('تمت إضافة الخدمة بنجاح','success');fetchAllData();
+    }
+
+    let appModalSubmit = null;
+    function appField(id,label,value,type='text') { return `<div><label class="block text-xs text-zinc-400 mb-1">${escapeHtml(label)}</label><input id="${id}" type="${type}" value="${escapeHtml(value)}" class="w-full bg-bgDark border border-borderDark rounded-xl px-3 py-2.5 text-sm focus:outline-none" /></div>`; }
+    function openAppModal(title,description,body,submitLabel='حفظ',onSubmit=null) {
+      document.getElementById('appModalTitle').textContent=title;document.getElementById('appModalDescription').textContent=description;
+      document.getElementById('appModalBody').innerHTML=body;appModalSubmit=onSubmit;
+      document.getElementById('appModalFooter').innerHTML=`<button type="button" onclick="closeAppModal()" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-white">إلغاء</button><button type="button" id="appModalSubmitBtn" onclick="submitAppModal()" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition">${escapeHtml(submitLabel)}</button>`;
+      const modal=document.getElementById('appActionModal');modal.classList.remove('hidden');modal.classList.add('flex');
+    }
+    function openConfirmModal(title,description,onConfirm,confirmLabel='تأكيد الحذف') {
+      openAppModal(title,description,'<div class="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-600 dark:text-rose-200">يرجى التأكد من العملية قبل المتابعة. هذا الإجراء قد لا يمكن التراجع عنه.</div>',confirmLabel,onConfirm);
+      document.getElementById('appModalSubmitBtn').className='px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition';
+    }
+    async function submitAppModal(){
+      if(!appModalSubmit)return;
+      const btn=document.getElementById('appModalSubmitBtn');
+      const originalLabel=btn.textContent;
+      btn.disabled=true;
+      btn.textContent='جارٍ التنفيذ...';
+      try {
+        await appModalSubmit();
+      } catch(e) {
+        showToast('حدث خطأ غير متوقع: '+(e?.message||e),'error');
+      } finally {
+        if(document.getElementById('appActionModal').classList.contains('flex')) {
+          btn.disabled=false;
+          btn.textContent=originalLabel;
+        }
+      }
+    }
+    function closeAppModal(){const modal=document.getElementById('appActionModal');modal.classList.add('hidden');modal.classList.remove('flex');appModalSubmit=null;}
+    function showToast(message,type='success'){const el=document.getElementById('appToast');el.textContent=message;el.className=`fixed bottom-5 left-5 z-[90] max-w-sm rounded-xl border px-4 py-3 text-sm shadow-xl ${type==='error'?'bg-rose-950 border-rose-500/40 text-rose-200':'bg-emerald-950 border-emerald-500/40 text-emerald-200'}`;el.classList.remove('hidden');clearTimeout(window.__twToastTimer);window.__twToastTimer=setTimeout(()=>el.classList.add('hidden'),4000);}
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAppModal();});
+
+    function switchTab(tab) {
+      ['bookings', 'interactions', 'conversations', 'catalog', 'zones'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        document.getElementById(`tab-${t}`).className = 'pb-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-2 transition';
+      });
+      document.getElementById(`view-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).className = 'pb-3 text-sm font-bold border-b-2 border-purple-500 text-purple-500 flex items-center gap-2 transition';
+    }
+
+    function toggleConfigModal() {
+      const modal = document.getElementById('configModal');
+      document.getElementById('cfgSupabaseUrl').value = SUPABASE_URL;
+      document.getElementById('cfgSupabaseKey').value = SUPABASE_KEY;
+      document.getElementById('cfgGeminiKey').value = GEMINI_KEY;
+      modal.classList.toggle('hidden');
+      modal.classList.toggle('flex');
+    }
+
+    function saveConfig() {
+      SUPABASE_URL = document.getElementById('cfgSupabaseUrl').value.trim();
+      SUPABASE_KEY = document.getElementById('cfgSupabaseKey').value.trim();
+      GEMINI_KEY   = document.getElementById('cfgGeminiKey').value.trim();
+
+      localStorage.setItem('SB_URL', SUPABASE_URL);
+      localStorage.setItem('SB_KEY', SUPABASE_KEY);
+      localStorage.setItem('GM_KEY', GEMINI_KEY);
+
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      toggleConfigModal();
+      fetchAllData();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      fetchAllData();
+      setInterval(fetchAllData, 5000);
+    });
+  </script>
+</body>
+</html>

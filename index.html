@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>المساعد الذكي لحجز تنظيف المفروشات</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Cairo -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Interactive map (Leaflet + OpenStreetMap) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Cairo', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #e0e7ff 100%);
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
+    #chatContainer .message-text { overflow-wrap: anywhere; word-break: normal; white-space: pre-wrap; }
+  </style>
+</head>
+<body class="min-h-[100dvh] flex items-center justify-center p-0 md:p-4 lg:p-6 overflow-x-hidden">
+
+  <!-- Main Elegant Chat Container -->
+  <main class="w-full max-w-3xl h-[100dvh] md:h-[88vh] md:max-h-[850px] bg-white/95 backdrop-blur-xl md:rounded-3xl shadow-2xl border border-purple-100 flex flex-col overflow-hidden">
+    
+    <!-- Modern Royal Purple & Indigo Header -->
+    <header class="bg-gradient-to-l from-purple-700 via-violet-600 to-indigo-600 px-4 md:px-6 py-3.5 md:py-4 text-white flex items-center justify-between shrink-0 shadow-md">
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <div class="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-inner">
+            <i data-lucide="sparkles" class="w-5 h-5 md:w-6 md:h-6 text-white"></i>
+          </div>
+          <span class="w-2.5 h-2.5 md:w-3 md:h-3 bg-emerald-400 rounded-full absolute -bottom-0.5 -right-0.5 ring-2 ring-purple-700"></span>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-sm md:text-lg tracking-wide">خدمة العملاء والحجز الذكي</h1>
+          <p class="text-[11px] md:text-xs text-purple-100 flex items-center gap-1.5">
+            <span>العناية وتنظيف المفروشات بالبخار</span>
+            <span class="hidden sm:inline">•</span>
+            <span class="text-emerald-300 font-semibold">يرد فوريًا</span>
+          </p>
+        </div>
+      </div>
+
+      <button onclick="resetChat()" class="px-2.5 md:px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-[11px] md:text-xs font-bold flex items-center gap-1.5 transition shrink-0">
+        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+        <span>محادثة جديدة</span>
+      </button>
+    </header>
+
+    <!-- Chat Messages Area -->
+    <div id="chatContainer" class="flex-1 overflow-y-auto p-3 md:p-5 space-y-4 bg-slate-50/70">
+      <!-- Welcome message is rendered on page load with its local timestamp. -->
+    </div>
+
+    <!-- Bottom Input Bar -->
+    <div class="p-3 md:p-3.5 bg-white border-t border-slate-100 shrink-0">
+      <form onsubmit="sendMessage(event)" class="flex items-center gap-2">
+        <!-- Location Helper Button -->
+        <button
+          type="button"
+          onclick="openMapModal()"
+          class="bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-3 md:px-3.5 py-2.5 md:py-3 rounded-2xl text-[11px] md:text-xs font-bold flex items-center gap-1 transition shrink-0 shadow-sm"
+          title="تحديد الموقع أو إرسال العنوان بالتفصيل"
+        >
+          <i data-lucide="map-pin" class="w-4 h-4 text-purple-600"></i>
+          <span class="hidden sm:inline">إرسال العنوان</span>
+        </button>
+
+        <input
+          id="userInput"
+          type="text"
+          placeholder="اكتب رسالتك هنا..."
+          class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-2xl px-3.5 md:px-4 py-2.5 md:py-3 text-xs md:text-sm focus:outline-none focus:border-purple-500 focus:bg-white transition"
+          autocomplete="off"
+        />
+
+        <button
+          id="sendBtn"
+          type="submit"
+          class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 md:px-5 py-2.5 md:py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-1.5 transition shrink-0 shadow-md shadow-purple-500/20"
+        >
+          <span>إرسال</span>
+          <i data-lucide="send" class="w-4 h-4"></i>
+        </button>
+      </form>
+    </div>
+
+  </main>
+
+  <!-- Location Modal -->
+  <div id="mapModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3 md:p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-purple-100 flex flex-col max-h-[90vh]">
+      <div class="p-3.5 md:p-4 bg-gradient-to-l from-purple-700 to-indigo-600 text-white flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2">
+          <i data-lucide="map-pin" class="w-5 h-5"></i>
+          <h3 class="font-bold text-sm">مشاركة العنوان التفصيلي للتيم</h3>
+        </div>
+        <button onclick="closeMapModal()" class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30">✕</button>
+      </div>
+
+      <div class="p-3.5 md:p-4 space-y-3 overflow-y-auto flex-1">
+        <div class="flex flex-wrap gap-2">
+          <button type="button" onclick="locateCustomerNow()" class="flex-1 min-w-[160px] bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2.5 md:py-3 rounded-xl text-xs md:text-sm font-extrabold shadow-sm">📍 حدد موقعي الآن</button>
+          <button type="button" onclick="centerMapOnEgypt()" class="px-3.5 py-2.5 md:py-3 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200">عرض مصر</button>
+        </div>
+        <p id="locationStatus" class="text-xs text-slate-600 bg-slate-50 rounded-xl p-3 border border-slate-100">اسمح للمتصفح بالوصول للموقع، أو اضغط على الخريطة لتحديد مكانك يدويًا. حرّك العلامة لتصحيح الموقع.</p>
+        <div id="customerMap" class="w-full h-[260px] md:h-[320px] rounded-2xl border border-slate-200 z-0"></div>
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="block text-[11px] font-bold text-slate-600 mb-1">خط العرض</label><input id="modalLatitude" readonly dir="ltr" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs" placeholder="لم يتم التحديد"></div>
+          <div><label class="block text-[11px] font-bold text-slate-600 mb-1">خط الطول</label><input id="modalLongitude" readonly dir="ltr" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs" placeholder="لم يتم التحديد"></div>
+        </div>
+        <div><label class="block text-xs font-bold text-slate-700 mb-1">العنوان التفصيلي (المنطقة، الشارع، رقم العمارة، الدور)</label><input id="modalDetailedAddress" type="text" placeholder="مثال: المعادي - شارع 9 - عمارة 14 - الدور التاني" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-purple-600" /></div>
+        <div class="flex items-center justify-between gap-2"><span class="text-[11px] text-slate-500">رابط الخريطة سيتولد تلقائيًا بعد تحديد الموقع.</span><a id="previewMapLink" href="#" target="_blank" rel="noopener" class="hidden text-xs font-bold text-indigo-600 underline">معاينة الموقع</a></div>
+      </div>
+
+      <div class="p-3.5 md:p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
+        <button type="button" onclick="closeMapModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200">إلغاء</button>
+        <button type="button" onclick="confirmLocationModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 md:px-5 py-2.5 rounded-xl text-xs font-bold shadow">
+          إرسال العنوان للبوت 📍
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = localStorage.getItem('SB_URL') || 'https://jlaczyfdaxcdevcozcnx.supabase.co';
+    const SUPABASE_KEY = localStorage.getItem('SB_KEY') || 'sb_publishable_vih4Lf_VGHooa_IxoicuCA_X0Bg2ESc';
+    const GEMINI_KEY   = localStorage.getItem('GM_KEY') || 'AQ.Ab8RN6K5r2fgj6JVAUTz0bWdiw7S1WHWAHuv2Fy6jc248gIEoA';
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let chatHistory = [];
+    let catalogCache = [];
+    let WORKING_MODEL = null;
+    let lastSharedLocationUrl = '';
+    let customerMapInstance = null;
+    let customerMapMarker = null;
+    let selectedCustomerCoordinates = null;
+    let requestInProgress = false;
+    const conversationSessionId = (crypto.randomUUID ? crypto.randomUUID() : `tw-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+    async function logConversation(event) {
+      try {
+        await supabaseClient.from('conversation_logs').insert([{
+          session_id: conversationSessionId,
+          speaker: event.speaker || 'system',
+          message: String(event.message || '').slice(0, 12000),
+          event_type: event.event_type || 'message',
+          tool_name: event.tool_name || null,
+          tool_data: event.tool_data || null,
+          customer_name: event.customer_name || null,
+          customer_phone: normalizeEgyptianPhone(event.customer_phone) || null
+        }]);
+      } catch (e) { console.warn('Conversation log skipped:', e); }
+    }
+
+    function normalizeMapsUrl(raw) {
+      const value = String(raw || '').trim();
+      if (!value) return null;
+      if (!/^https?:\/\//i.test(value)) return null;
+      try {
+        const url = new URL(value);
+        const host = url.hostname.toLowerCase();
+        if (!(host === 'maps.app.goo.gl' || host.endsWith('google.com') || host.endsWith('goo.gl') || host === 'maps.google.com')) return null;
+        return url.href;
+      } catch { return null; }
+    }
+
+    function getEgyptDateTime() {
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit',
+        weekday: 'long', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+      }).formatToParts(new Date());
+      const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+      const arabicDay = new Intl.DateTimeFormat('ar-EG', {
+        timeZone: 'Africa/Cairo', weekday: 'long'
+      }).format(new Date());
+      return {
+        date: `${values.year}-${values.month}-${values.day}`,
+        day: arabicDay,
+        time: new Intl.DateTimeFormat('ar-EG', {
+          timeZone: 'Africa/Cairo', hour: 'numeric', minute: '2-digit', hour12: true
+        }).format(new Date())
+      };
+    }
+
+    // يقبل أرقام المحمول المصرية الصحيحة فقط: 01XXXXXXXXX أو +201XXXXXXXXX / 201XXXXXXXXX
+    function normalizeEgyptianPhone(value) {
+      let phone = String(value || '').replace(/[\s٠-٩]/g, ch => {
+        if (/^[٠-٩]$/.test(ch)) return String('٠١٢٣٤٥٦٧٨٩'.indexOf(ch));
+        return '';
+      }).replace(/[()\-]/g, '');
+      if (phone.startsWith('+20')) phone = '0' + phone.slice(3);
+      else if (phone.startsWith('20') && phone.length === 12) phone = '0' + phone.slice(2);
+      return /^01[0125]\d{8}$/.test(phone) ? phone : null;
+    }
+
+    function phoneValidationResult(value) {
+      const normalized = normalizeEgyptianPhone(value);
+      return normalized
+        ? { valid: true, phone: normalized }
+        : { valid: false, status: 'invalid_phone', message: 'رقم الهاتف غير مكتمل أو غير صحيح. رقم المحمول المصري يجب أن يتكون من 11 رقمًا ويبدأ بـ 010 أو 011 أو 012 أو 015. اطلب من العميل مراجعته وإرساله مرة أخرى، ولا تنفذ الحجز أو التعديل أو الإلغاء.' };
+    }
+
+    async function loadInitialCatalog() {
+      const { data } = await supabaseClient.from('services_catalog').select('*');
+      catalogCache = data || [];
+    }
+
+    function openMapModal() {
+      const modal = document.getElementById('mapModal');
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      setTimeout(() => {
+        if (!customerMapInstance) {
+          customerMapInstance = L.map('customerMap', { zoomControl: true }).setView([30.0444, 31.2357], 11);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(customerMapInstance);
+          customerMapInstance.on('click', e => setCustomerMapPoint(e.latlng.lat, e.latlng.lng, 'تم تحديد الموقع يدويًا. حرّك العلامة إذا احتجت تصحيح المكان.'));
+        }
+        customerMapInstance.invalidateSize();
+      }, 180);
+    }
+
+    function closeMapModal() {
+      document.getElementById('mapModal').classList.add('hidden');
+      document.getElementById('mapModal').classList.remove('flex');
+    }
+
+    function centerMapOnEgypt() {
+      if (customerMapInstance) customerMapInstance.setView([26.8206, 30.8025], 6);
+    }
+
+    function setCustomerMapPoint(lat, lng, statusText) {
+      selectedCustomerCoordinates = { latitude: Number(lat), longitude: Number(lng) };
+      const point = [selectedCustomerCoordinates.latitude, selectedCustomerCoordinates.longitude];
+      if (!customerMapMarker) {
+        customerMapMarker = L.marker(point, { draggable: true }).addTo(customerMapInstance);
+        customerMapMarker.on('dragend', () => {
+          const p = customerMapMarker.getLatLng();
+          setCustomerMapPoint(p.lat, p.lng, 'تم تحديث موقع العلامة.');
+        });
+      } else customerMapMarker.setLatLng(point);
+      customerMapInstance.setView(point, Math.max(customerMapInstance.getZoom(), 16));
+      document.getElementById('modalLatitude').value = selectedCustomerCoordinates.latitude.toFixed(7);
+      document.getElementById('modalLongitude').value = selectedCustomerCoordinates.longitude.toFixed(7);
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${selectedCustomerCoordinates.latitude},${selectedCustomerCoordinates.longitude}`)}`;
+      const link = document.getElementById('previewMapLink'); link.href = url; link.classList.remove('hidden');
+      document.getElementById('locationStatus').textContent = statusText || 'تم تحديد الموقع. راجع العلامة واكتب العنوان التفصيلي.';
+    }
+
+    function locateCustomerNow() {
+      const status = document.getElementById('locationStatus');
+      if (!navigator.geolocation) { status.textContent = 'المتصفح لا يدعم تحديد الموقع. اضغط على الخريطة لتحديده يدويًا.'; return; }
+      status.textContent = 'جارٍ تحديد موقعك… اسمح للمتصفح باستخدام الموقع وانتظر لحظات.';
+      navigator.geolocation.getCurrentPosition(pos => {
+        const accuracy = Math.round(pos.coords.accuracy || 0);
+        setCustomerMapPoint(pos.coords.latitude, pos.coords.longitude, `تم تحديد موقعك. الدقة التقريبية المعلنة من الجهاز: ${accuracy} متر. يمكنك تحريك العلامة يدويًا للتصحيح.`);
+      }, err => {
+        const msg = err.code === 1 ? 'لم تسمح للمتصفح بالوصول للموقع.' : err.code === 2 ? 'تعذر تحديد الموقع من الجهاز حاليًا.' : 'انتهت مهلة تحديد الموقع.';
+        status.textContent = `${msg} تأكد من تفعيل الموقع واستخدام HTTPS، أو حدد المكان بالضغط على الخريطة.`;
+      }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+    }
+
+    function confirmLocationModal() {
+      const address = document.getElementById('modalDetailedAddress').value.trim();
+      if (!selectedCustomerCoordinates) { alert('حدد موقعك أولاً من زر «حدد موقعي الآن» أو اضغط على مكانك في الخريطة.'); return; }
+      if (!address) { alert('اكتب العنوان التفصيلي حتى يصل الفريق للمكان بسهولة.'); return; }
+      const { latitude, longitude } = selectedCustomerCoordinates;
+      lastSharedLocationUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+      closeMapModal();
+      document.getElementById('userInput').value = `📍 عنواني بالتفصيل: ${address}\nإحداثيات موقعي: ${latitude}, ${longitude}\nرابط Google Maps: ${lastSharedLocationUrl}`;
+      sendMessage(new Event('submit'));
+      document.getElementById('modalDetailedAddress').value = '';
+    }
+
+    async function executeToolCall(call) {
+      const { name, args } = call;
+
+      if (name === 'request_customer_location') {
+        openMapModal();
+        return { status: 'location_picker_opened', message: 'تم فتح خريطة تحديد الموقع للعميل. انتظر أن يحدد موقعه ويرسل العنوان قبل استكمال الحجز.' };
+      }
+
+      if (name === 'calculate_cleaning_price') {
+        const { data: catalog } = await supabaseClient.from('services_catalog').select('*');
+        let total = 0;
+        const details = [];
+        const missingItems = [];
+        for (const reqItem of (args.items || [])) {
+          const found = catalog?.find(c => c.item_key === reqItem.item_key);
+          if (found && Number.isFinite(Number(found.price))) {
+            const quantity = Number(reqItem.quantity);
+            const sub = Number(found.price) * quantity;
+            total += sub;
+            details.push(`${quantity} ${found.item_name_ar} (${sub} ج.م)`);
+          } else {
+            missingItems.push(reqItem.item_key);
+          }
+        }
+        return missingItems.length
+          ? { status: 'missing_catalog_items', missing_items: missingItems, message: 'تعذر العثور على سعر بعض القطع في كتالوج الخدمات. لا تعرض سعراً نهائياً قبل مراجعة هذه القطع.' }
+          : { status: 'success', total_price: total, breakdown: details.join(' + ') };
+      }
+
+      if (name === 'check_schedule_by_area') {
+        const clientArea = (args.client_area || '').trim();
+        const { data: zones } = await supabaseClient.from('zones').select('*');
+        const matchedZone = zones?.find(z =>
+          z.covered_areas.some(a => clientArea.includes(a) || a.includes(clientArea))
+        );
+
+        const today = getEgyptDateTime().date;
+        if (!matchedZone) {
+          return { status: 'available', message: 'متاح الحجز غداً أو بعد غد في الفترة الصباحية (10ص - 2م) أو المسائية (3م - 7م).' };
+        }
+
+        const { data: existingBookings } = await supabaseClient
+          .from('bookings')
+          .select('booking_date, time_slot, area')
+          .eq('zone_id', matchedZone.id)
+          .gte('booking_date', today);
+
+        return { status: 'matched_zone', zone_name: matchedZone.zone_name, team_current_bookings: existingBookings || [] };
+      }
+
+      if (name === 'update_existing_booking') {
+        const phoneCheck = phoneValidationResult(args.client_phone);
+        if (!phoneCheck.valid) return phoneCheck;
+        if (!String(args.client_name || '').trim()) {
+          return { status: 'missing_customer_name', message: 'اسم العميل مطلوب للتحقق من الحجز.' };
+        }
+
+        const { data: foundList, error: lookupError } = await supabaseClient
+          .from('bookings')
+          .select('*')
+          .eq('client_phone', phoneCheck.phone)
+          .ilike('client_name', String(args.client_name).trim())
+          .order('created_at', { ascending: false });
+
+        if (lookupError) return { status: 'error', message: lookupError.message };
+        const existingOrder = (foundList || []).find(order => order.status !== 'cancelled');
+        if (!existingOrder) return { status: 'not_found', message: 'لم يتم العثور على حجز نشط مطابق للاسم ورقم الهاتف.' };
+
+        const newArea = args.new_area || existingOrder.area;
+        const { data: updated, error } = await supabaseClient
+          .from('bookings')
+          .update({
+            area: newArea,
+            detailed_address: args.detailed_address || existingOrder.detailed_address || null,
+            maps_url: normalizeMapsUrl(args.maps_url) || existingOrder.maps_url || null,
+            latitude: Number.isFinite(Number(args.latitude)) ? Number(args.latitude) : existingOrder.latitude || null,
+            longitude: Number.isFinite(Number(args.longitude)) ? Number(args.longitude) : existingOrder.longitude || null,
+            booking_date: args.new_booking_date || existingOrder.booking_date,
+            time_slot: args.new_time_slot || existingOrder.time_slot,
+            items_summary: args.new_items_summary || existingOrder.items_summary,
+            total_price: args.new_total_price !== undefined ? Number(args.new_total_price) : existingOrder.total_price
+          })
+          .eq('id', existingOrder.id)
+          .select()
+          .single();
+
+        if (error) return { status: 'error', message: error.message };
+        return { status: 'updated_successfully', updated_booking: updated };
+      }
+
+      if (name === 'confirm_booking') {
+        const phoneCheck = phoneValidationResult(args.client_phone);
+        if (!phoneCheck.valid) return phoneCheck;
+        if (!String(args.client_name || '').trim()) {
+          return { status: 'missing_customer_name', message: 'اسم العميل مطلوب قبل تأكيد الحجز.' };
+        }
+        if (!String(args.area || '').trim() || !String(args.booking_date || '').trim() || !String(args.time_slot || '').trim()) {
+          return { status: 'missing_booking_details', message: 'بيانات المنطقة أو التاريخ أو الموعد غير مكتملة. لا تحفظ الحجز قبل استكمالها.' };
+        }
+
+        const { data: zones, error: zonesError } = await supabaseClient.from('zones').select('*');
+        if (zonesError) return { status: 'error', message: zonesError.message };
+        const area = String(args.area).trim();
+        const matchedZone = zones?.find(z =>
+          Array.isArray(z.covered_areas) && z.covered_areas.some(a => area.includes(a) || a.includes(area))
+        );
+        const safeMapsUrl = normalizeMapsUrl(args.maps_url);
+        const safeLatitude = args.latitude !== undefined && args.latitude !== null && args.latitude !== '' ? Number(args.latitude) : null;
+        const safeLongitude = args.longitude !== undefined && args.longitude !== null && args.longitude !== '' ? Number(args.longitude) : null;
+        const validCoordinates = Number.isFinite(safeLatitude) && Number.isFinite(safeLongitude) && Math.abs(safeLatitude) <= 90 && Math.abs(safeLongitude) <= 180;
+        const fullArea = area;
+
+        const { data: sameDayBookings, error: duplicateError } = await supabaseClient
+          .from('bookings')
+          .select('*')
+          .eq('client_phone', phoneCheck.phone)
+          .eq('booking_date', args.booking_date)
+          .order('created_at', { ascending: false });
+
+        if (duplicateError) return { status: 'error', message: duplicateError.message };
+        const normalizedName = String(args.client_name).trim().toLocaleLowerCase('ar');
+        const existingBooking = (sameDayBookings || []).find(order =>
+          String(order.client_name || '').trim().toLocaleLowerCase('ar') === normalizedName
+        );
+
+        // Re-activate the same saved order (including pending/cancelled) instead of inserting a duplicate.
+        if (existingBooking) {
+          const { data: updated, error } = await supabaseClient
+            .from('bookings')
+            .update({
+              client_name: String(args.client_name).trim(),
+              client_phone: phoneCheck.phone,
+              area: fullArea || existingBooking.area,
+              detailed_address: args.detailed_address || existingBooking.detailed_address || null,
+              maps_url: safeMapsUrl || existingBooking.maps_url || null,
+              latitude: validCoordinates ? safeLatitude : existingBooking.latitude || null,
+              longitude: validCoordinates ? safeLongitude : existingBooking.longitude || null,
+              zone_id: matchedZone ? matchedZone.id : existingBooking.zone_id,
+              booking_date: args.booking_date,
+              time_slot: args.time_slot,
+              items_summary: args.items_summary,
+              total_price: Number(args.total_price),
+              status: 'confirmed'
+            })
+            .eq('id', existingBooking.id)
+            .select()
+            .single();
+
+          if (error) return { status: 'error', message: error.message };
+          return { status: 'updated_existing_booking', booking_details: updated };
+        }
+
+        const { data, error } = await supabaseClient
+          .from('bookings')
+          .insert([{
+            client_name: String(args.client_name).trim(),
+            client_phone: phoneCheck.phone,
+            area: fullArea,
+            detailed_address: args.detailed_address || null,
+            maps_url: safeMapsUrl,
+            latitude: validCoordinates ? safeLatitude : null,
+            longitude: validCoordinates ? safeLongitude : null,
+            zone_id: matchedZone ? matchedZone.id : null,
+            booking_date: args.booking_date,
+            time_slot: args.time_slot,
+            items_summary: args.items_summary,
+            total_price: Number(args.total_price),
+            status: 'confirmed'
+          }])
+          .select()
+          .single();
+
+        if (error) return { status: 'error', message: error.message };
+        return { status: 'booked_successfully', booking_details: data };
+      }
+
+      if (name === 'record_customer_request') {
+        const customerName = String(args.customer_name || '').trim();
+        const phone = args.customer_phone ? phoneValidationResult(args.customer_phone) : null;
+        if (phone && !phone.valid) return phone;
+        const record = {
+          customer_name: customerName || null,
+          customer_phone: phone && phone.valid ? phone.phone : null,
+          category: args.category || 'other',
+          subject: String(args.subject || 'طلب من العميل').trim(),
+          details: String(args.details || '').trim(),
+          priority: args.priority || 'normal',
+          status: 'new',
+          related_booking_id: args.related_booking_id || null
+        };
+        if (!record.details) return { status: 'missing_details', message: 'تفاصيل الطلب مطلوبة لتسجيله.' };
+        const { data, error } = await supabaseClient.from('customer_interactions').insert([record]).select().single();
+        if (error) return { status: 'error', message: error.message };
+        await logConversation({speaker:'tool', event_type:'customer_request_created', tool_name:name, message:`تم تسجيل ${record.subject}`, tool_data:{...record, interaction_id:data.id}, customer_name:record.customer_name, customer_phone:record.customer_phone});
+        return { status: 'recorded_successfully', interaction_id: data.id, message: 'تم تسجيل طلب العميل وإرساله للإدارة للمتابعة.' };
+      }
+
+      if (name === 'cancel_or_modify_booking') {
+        const phoneCheck = phoneValidationResult(args.client_phone);
+        if (!phoneCheck.valid) return phoneCheck;
+        const clientName = String(args.client_name || '').trim();
+        if (!clientName) return { status: 'missing_customer_name', message: 'اسم العميل مطلوب للتحقق من الحجز.' };
+
+        const { data: bookings, error: lookupError } = await supabaseClient
+          .from('bookings')
+          .select('*')
+          .eq('client_phone', phoneCheck.phone)
+          .ilike('client_name', clientName)
+          .order('created_at', { ascending: false });
+
+        if (lookupError) return { status: 'error', message: lookupError.message };
+        const targetBooking = (bookings || []).find(order =>
+          args.action === 'cancel'
+            ? order.status !== 'cancelled'
+            : order.status === 'confirmed' || order.status === 'pending'
+        );
+        if (!targetBooking) {
+          return { status: 'not_found', message: 'لم يتم العثور على حجز مطابق بالاسم ورقم الهاتف.' };
+        }
+
+        if (!['cancel', 'hold'].includes(args.action)) {
+          return { status: 'unsupported_action', message: 'الإجراء غير مدعوم.' };
+        }
+
+        const nextStatus = args.action === 'hold' ? 'pending' : 'cancelled';
+        const { data: changedBooking, error } = await supabaseClient
+          .from('bookings')
+          .update({ status: nextStatus })
+          .eq('id', targetBooking.id)
+          .select()
+          .single();
+
+        if (error) return { status: 'error', message: error.message };
+        return args.action === 'hold'
+          ? { status: 'put_on_hold_successfully', booking: changedBooking }
+          : { status: 'cancelled_successfully', cancelled_booking: changedBooking };
+      }
+    }
+
+    async function sendGeminiRequestWithFallback(payload) {
+      if (WORKING_MODEL) {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/${WORKING_MODEL}:generateContent?key=${GEMINI_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!data.error) return data;
+        WORKING_MODEL = null;
+      }
+
+      let candidateModels = ['models/gemini-3-flash-preview', 'models/gemini-2.0-flash', 'models/gemini-1.5-flash'];
+      try {
+        const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_KEY}`);
+        const listData = await listRes.json();
+        if (listData.models && Array.isArray(listData.models)) {
+          const validFromApi = listData.models
+            .filter(m =>
+              m.supportedGenerationMethods?.includes('generateContent') &&
+              m.name.includes('gemini') &&
+              !m.name.includes('2.5') &&
+              !m.name.includes('vision') &&
+              !m.name.includes('embedding') &&
+              !m.name.includes('imagen') &&
+              !m.name.includes('tts')
+            )
+            .map(m => m.name);
+          if (validFromApi.length > 0) candidateModels = [...new Set([...validFromApi, ...candidateModels])];
+        }
+      } catch (e) {}
+
+      let lastErrorMsg = 'تعذر الاتصال';
+      for (const modelName of candidateModels) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${GEMINI_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if (!data.error && data.candidates && data.candidates.length > 0) {
+            WORKING_MODEL = modelName;
+            return data;
+          } else if (data.error) {
+            lastErrorMsg = data.error.message;
+          }
+        } catch (err) {
+          lastErrorMsg = err.message;
+        }
+      }
+      throw new Error(lastErrorMsg);
+    }
+
+    async function callGeminiAgent() {
+      if (!catalogCache.length) await loadInitialCatalog();
+      const egyptNow = getEgyptDateTime();
+      const todayStr = egyptNow.date;
+      const availableCatalogCodes = catalogCache.map(c => `${c.item_key} (${c.item_name_ar})`).join(', ');
+
+      const toolsDeclaration = [{
+        functionDeclarations: [
+          {
+            name: 'calculate_cleaning_price',
+            description: 'حساب التكلفة الإجمالية لتنظيف المفروشات.',
+            parameters: {
+              type: 'OBJECT',
+              properties: {
+                items: {
+                  type: 'ARRAY',
+                  items: {
+                    type: 'OBJECT',
+                    properties: {
+                      item_key: { type: 'STRING', description: `كود القطعة من: ${availableCatalogCodes}` },
+                      quantity: { type: 'NUMBER' }
+                    },
+                    required: ['item_key', 'quantity']
+                  }
+                }
+              },
+              required: ['items']
+            }
+          },
+          {
+            name: 'check_schedule_by_area',
+            description: 'فحص المواعيد المتاحة حسب المنطقة.',
+            parameters: {
+              type: 'OBJECT',
+              properties: { client_area: { type: 'STRING' } },
+              required: ['client_area']
+            }
+          },
+          {
+            name: 'request_customer_location',
+            description: 'افتح للعميل نافذة خريطة تفاعلية كاملة لتحديد موقعه الحالي بدقة أو وضع علامة يدويًا. استخدمها فوراً عندما يطلب العميل الأوردر ويعطي اسمه ورقم تليفونه لتحديد العنوان والموقع بدقة قبل تأكيد الحجز.',
+            parameters: { type: 'OBJECT', properties: {} }
+          },
+          {
+            name: 'confirm_booking',
+            description: 'تسجيل حجز جديد.',
+            parameters: {
+              type: 'OBJECT',
+              properties: {
+                client_name: { type: 'STRING' },
+                client_phone: { type: 'STRING' },
+                area: { type: 'STRING' },
+                detailed_address: { type: 'STRING' },
+                maps_url: { type: 'STRING', description: 'رابط Google Maps المرسل من العميل' },
+                latitude: { type: 'NUMBER', description: 'خط العرض من اختيار العميل على الخريطة' },
+                longitude: { type: 'NUMBER', description: 'خط الطول من اختيار العميل على الخريطة' },
+                booking_date: { type: 'STRING' },
+                time_slot: { type: 'STRING' },
+                items_summary: { type: 'STRING' },
+                total_price: { type: 'NUMBER' }
+              },
+              required: ['client_name', 'client_phone', 'area', 'booking_date', 'time_slot', 'items_summary', 'total_price']
+            }
+          },
+          {
+            name: 'update_existing_booking',
+            description: 'تعديل حجز قائم بدون تكراره.',
+            parameters: {
+              type: 'OBJECT',
+              properties: {
+                client_phone: { type: 'STRING' },
+                client_name: { type: 'STRING' },
+                new_area: { type: 'STRING' },
+                detailed_address: { type: 'STRING', description: 'العنوان الجديد بالتفصيل (اسم الشارع ورقم العمارة)' },
+                maps_url: { type: 'STRING', description: 'رابط Google Maps الجديد' },
+                latitude: { type: 'NUMBER' },
+                longitude: { type: 'NUMBER' },
+                new_booking_date: { type: 'STRING' },
+                new_time_slot: { type: 'STRING' },
+                new_items_summary: { type: 'STRING' },
+                new_total_price: { type: 'NUMBER' }
+              }
+            }
+          },
+          {
+            name: 'record_customer_request',
+            description: 'تسجيل أي شكوى أو ملاحظة أو طلب إضافي أو مشكلة في التنظيف أو الفنيين أو الرد، حتى تتابعها الإدارة. استخدمها عند وجود معلومة تحتاج متابعة بشرية.',
+            parameters: {
+              type: 'OBJECT',
+              properties: {
+                customer_name: { type: 'STRING' },
+                customer_phone: { type: 'STRING' },
+                category: { type: 'STRING', enum: ['cleaning_complaint','technician_complaint','response_complaint','reschedule_request','callback_request','extra_request','general_note','other'] },
+                subject: { type: 'STRING' },
+                details: { type: 'STRING', description: 'التفاصيل الكاملة كما فهمها البوت، مع الحفاظ على كل المعلومات المهمة' },
+                priority: { type: 'STRING', enum: ['low','normal','high','urgent'] },
+                related_booking_id: { type: 'STRING' }
+              },
+              required: ['category','subject','details','priority']
+            }
+          },
+          {
+            name: 'cancel_or_modify_booking',
+            description: 'التحقق من اسم العميل ورقم هاتفه ثم تعليق الحجز مؤقتاً أو إلغاؤه نهائياً حسب طلب العميل وبعد تأكيده. استخدم hold للتعليق وcancel للإلغاء النهائي.',
+            parameters: {
+              type: 'OBJECT',
+              properties: {
+                client_name: { type: 'STRING' },
+                client_phone: { type: 'STRING' },
+                action: { type: 'STRING', enum: ['cancel', 'hold'] }
+              },
+              required: ['client_name', 'client_phone', 'action']
+            }
+          }
+        ]
+      }];
+
+      const systemInstruction = {
+        parts: [{
+          text: `أنت أحمد، موظف خدمة عملاء حقيقي الأسلوب في شركة Top Wash لتنظيف المفروشات في مصر. اليوم: ${egyptNow.day} الموافق ${todayStr}، والوقت المحلي الآن ${egyptNow.time} بتوقيت مصر (Africa/Cairo).
+
+أسلوب الكلام:
+- تكلم بالمصري المهذب والطبيعي، كأنك موظف خدمة عملاء بيتكلم على واتساب، وليس روبوتاً يقرأ نصوصاً محفوظة.
+- اجعل الرد غالباً جملة أو جملتين، وبحد أقصى 3 جمل قصيرة.
+- لا تكرر رسالة الترحيب الافتتاحية بعد ظهورها. لو العميل قال "أهلا" أو "السلام عليكم" أو مجرد تحية، رد بتحية قصيرة مختلفة مثل: "أهلاً بحضرتك، أقدر أساعد حضرتك إزاي؟" ثم انتظر طلبه.
+- لا تستخدم "ولا يهمك" أو "تحت أمرك" أو "يا فندم" في كل رد. استخدمها فقط عندما تناسب السياق، وغيّر صياغتك بشكل طبيعي.
+- لا تبالغ في المجاملات أو الوعود أو علامات التعجب، ولا تقل إنك سعيد أو متحمس في كل رسالة.
+- لا تعِد سؤال العميل عن معلومة سبق أن قدمها، ولا تكرر نفس السؤال بصياغات مختلفة دون داعٍ.
+- افهم المقصود من كلام العميل باللهجة المصرية والأخطاء الإملائية الشائعة، واسأل سؤال توضيح واحداً فقط إذا كانت القطعة أو الكمية غير واضحة.
+
+الحجوزات والأسعار:
+1. لا تؤلف أو تخمن أي سعر. استخدم calculate_cleaning_price، ولا تعرض سعراً نهائياً إذا رجعت الأداة بأن قطعة غير موجودة في الكتالوج.
+2. استخدم check_schedule_by_area قبل اقتراح أو تأكيد موعد. لا تخترع توافراً أو يوم عمل.
+3. لا تؤكد الحجز ولا تقل "تم الحجز" قبل أن ترجع أداة confirm_booking بنتيجة booked_successfully أو updated_existing_booking.
+4. بمجرد أن يطلب العميل الأوردر ويقوم بإرسال اسمه ورقم تليفونه، اطلب منه فوراً إرسال عنوانه وتحديد مكانه الحالي بالضغط على زر "إرسال العنوان" لاستدعاء أداة request_customer_location لفتح الخريطة التفاعلية. اجمع العنوان التفصيلي والإحداثيات ورابط الخريطة، ثم أكمل الحجز. لا تؤكد الحجز نهائياً إذا لم يتم استلام موقع دقيق من العميل.
+5. رقم المحمول المصري الصحيح يجب أن يكون 11 رقمًا ويبدأ بـ 010 أو 011 أو 012 أو 015. يمكن قبول صيغة +20 أو 20 إذا كانت مكتملة. إذا كان الرقم ناقصاً أو غير صحيح، وضّح ذلك بلطف واطلب إعادة كتابته؛ لا تعتبر الرقم صحيحاً لمجرد أن العميل أرسله، ولا تستدعِ أدوات الحجز أو التعديل أو الإلغاء به.
+6. إذا رجعت أداة الحجز أو التعديل بنتيجة invalid_phone، أخبر العميل بوضوح أن الرقم ناقص/غير صحيح واذكر أنه يجب أن يتكون من 11 رقمًا، واطلب منه مراجعته. لا تقل إن الحجز تم.
+7. قبل تعديل حجز قائم، تحقق من الاسم ورقم الهاتف الصحيحين معاً، ولا تعدل حجزاً ملغياً.
+
+الإلغاء والتعديل:
+8. إذا طلب العميل إلغاء أو تعديل أو تعليق حجز، اسأله أولاً عن الاسم ورقم التليفون المسجلين للتحقق من الأوردر.
+9. بعد استلام الاسم والرقم، تحقق من أن رقم الهاتف صحيح 11 رقمًا. إذا كان ناقصاً، اطلب تصحيحه ولا تكمل.
+10. لو العميل قال عايز يأجل أو يوقف الحجز مؤقتاً أو يخلي الأوردر معلق لحد ما يكلمكم، لا تلغيه. اعرض ملخص الحجز وخذ موافقته، ثم استدعِ cancel_or_modify_booking مع action="hold". لا تقل إنه اتعلق إلا بعد نتيجة put_on_hold_successfully.
+11. لو العميل طلب إلغاء نهائي، اعرض ملخص الحجز وخذ تأكيداً صريحاً، ثم استدعِ cancel_or_modify_booking مع action="cancel". لا تقل إنه اتلغى إلا بعد نتيجة cancelled_successfully.
+12. الحجز المعلق يظل محفوظاً في قاعدة البيانات ولا يتم حذفه. إذا طلب العميل تأكيد نفس الحجز مرة أخرى، استخدم confirm_booking بنفس الاسم والرقم والتاريخ والتفاصيل؛ الأداة ستعيد تفعيل نفس السجل إلى confirmed بدلاً من إنشاء سجل مكرر.
+13. إذا لم يتم العثور على حجز مطابق أو حدث خطأ من قاعدة البيانات، اشرح أن التغيير لم يكتمل بوضوح.
+14. عند طلب تعديل بيانات الحجز، استخدم update_existing_booking بعد التحقق من الاسم والرقم، واجمع فقط التفاصيل الجديدة المطلوبة. لا تنشئ حجزاً جديداً بدلاً من تعديل القديم.
+
+تسجيل الملاحظات والطلبات:
+15. أي شكوى أو ملاحظة أو طلب إضافي أو مشكلة بعد التنظيف أو مشكلة في الرد أو طلب معاودة اتصال أو تفاصيل مهمة لا تخص الحجز مباشرة: استخدم record_customer_request لتسجيلها كاملة للإدارة. لا تكتفِ بقول إنك سجلتها إلا بعد نتيجة recorded_successfully.
+16. اسأل عن الاسم ورقم الهاتف فقط إذا كانا ضروريين للمتابعة ولم يسبق للعميل تقديمهما. لا تخترع بيانات ولا تربط الطلب بحجز غير مؤكد.
+17. إذا أرسل العميل العنوان والإحداثيات ورابط الخريطة، مرر detailed_address وmaps_url وlatitude وlongitude إلى أداة الحجز أو التعديل. لا تختصر الرابط ولا تستبدل الإحداثيات بعنوان تقريبي. إذا لم تصل الإحداثيات، اطلب منه تحديدها على الخريطة.
+
+التاريخ:
+14. استخدم اليوم والتاريخ والوقت المحددين أعلى التعليمات بتوقيت مصر عند فهم "بكرة" و"بعده"، ولا تعتمد على UTC.`
+        }]
+      };
+
+      let data = await sendGeminiRequestWithFallback({
+        system_instruction: systemInstruction,
+        contents: chatHistory,
+        tools: toolsDeclaration
+      });
+
+      let candidate = data.candidates[0];
+      let modelParts = candidate.content.parts;
+
+      while (modelParts && modelParts.some(p => p.functionCall)) {
+        chatHistory.push({ role: 'model', parts: modelParts });
+        const functionResponsesParts = [];
+        for (const part of modelParts) {
+          if (part.functionCall) {
+            const toolResult = await executeToolCall(part.functionCall);
+            await logConversation({speaker:'tool', event_type:'tool_call', tool_name:part.functionCall.name, message:`${part.functionCall.name}: ${JSON.stringify(part.functionCall.args || {})}`, tool_data:{args:part.functionCall.args || {}, result:toolResult}});
+            functionResponsesParts.push({
+              functionResponse: { name: part.functionCall.name, response: toolResult }
+            });
+          }
+        }
+        chatHistory.push({ role: 'user', parts: functionResponsesParts });
+        data = await sendGeminiRequestWithFallback({
+          system_instruction: systemInstruction,
+          contents: chatHistory,
+          tools: toolsDeclaration
+        });
+        candidate = data.candidates[0];
+        modelParts = candidate.content.parts;
+      }
+
+      const finalText = (modelParts || []).map(p => p.text || '').join('\n');
+      chatHistory.push({ role: 'model', parts: [{ text: finalText }] });
+      return finalText;
+    }
+
+    function appendMessageUI(role, text) {
+      const box = document.getElementById('chatContainer');
+      const wrapper = document.createElement('div');
+      const isUser = role === 'user';
+      wrapper.className = isUser
+        ? 'flex items-start justify-end gap-2.5'
+        : 'flex items-start gap-3';
+
+      if (!isUser) {
+        const avatar = document.createElement('div');
+        avatar.className = 'w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shrink-0 mt-1 text-[10px] font-extrabold shadow-sm';
+        avatar.textContent = 'أحمد';
+        wrapper.appendChild(avatar);
+      }
+
+      const content = document.createElement('div');
+      content.className = `flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[85%] min-w-0`;
+      const bubble = document.createElement('div');
+      bubble.className = isUser
+        ? 'message-text bg-gradient-to-l from-purple-600 to-indigo-600 text-white rounded-2xl rounded-tl-none p-3.5 text-sm leading-relaxed w-fit max-w-full shadow-md'
+        : 'message-text bg-white border border-purple-100 text-slate-800 rounded-2xl rounded-tr-none p-4 text-sm leading-relaxed w-fit max-w-full shadow-sm';
+      bubble.textContent = String(text ?? '');
+
+      const timestamp = document.createElement('span');
+      timestamp.className = `mt-1 px-1 text-[10px] text-slate-400 ${isUser ? 'text-left' : 'text-right'}`;
+      timestamp.textContent = getEgyptDateTime().time;
+
+      content.appendChild(bubble);
+      content.appendChild(timestamp);
+      wrapper.appendChild(content);
+      box.appendChild(wrapper);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    // رد فوري على المجاملات والأسئلة الاجتماعية البسيطة بدون استدعاء Gemini أو أدوات الحجز.
+    function getInstantSmallTalkReply(message) {
+      const normalized = String(message || '')
+        .toLowerCase()
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/[؟?!،,.؛:]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const casualCheckIn = /^(?:(?:يا|ي)\s*)?(?:احمد\s*)?(?:ايه الاخبار|اي الاخبار|اخبارك ايه|اخبارك|عامل ايه|عامله ايه|انت عامل ايه|انتي عامله ايه|ايه الدنيا|الدنيا اخبارها ايه|ازيك|ازيك عامل ايه|ازيك عامله ايه)(?:\s*(?:يا\s*)?(?:احمد|حبيبي)|\s*ياحمد)?$/;
+      if (casualCheckIn.test(normalized)) {
+        return 'الحمد لله تمام، أخبار حضرتك إيه؟ تحب أساعد حضرتك إزاي؟';
+      }
+      return null;
+    }
+
+    async function sendMessage(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const input = document.getElementById('userInput');
+      const btn = document.getElementById('sendBtn');
+      const text = input.value.trim();
+      if (!text || requestInProgress) return;
+
+      requestInProgress = true;
+      input.value = '';
+      appendMessageUI('user', text);
+      logConversation({speaker:'customer', message:text});
+      chatHistory.push({ role: 'user', parts: [{ text }] });
+
+      const instantReply = getInstantSmallTalkReply(text);
+      if (instantReply) {
+        chatHistory.push({ role: 'model', parts: [{ text: instantReply }] });
+        appendMessageUI('model', instantReply);
+        logConversation({speaker:'assistant', message:instantReply});
+        requestInProgress = false;
+        input.focus();
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-pulse">يكتب...</span>`;
+
+      try {
+        const reply = await callGeminiAgent();
+        appendMessageUI('model', reply);
+        await logConversation({speaker:'assistant', message:reply});
+      } catch (err) {
+        appendMessageUI('model', `عذراً يا فندم، يرجى إعادة إرسال الرسالة.`);
+        logConversation({speaker:'system', event_type:'agent_error', message:String(err?.message || err)});
+      } finally {
+        requestInProgress = false;
+        btn.disabled = false;
+        btn.innerHTML = `<span>إرسال</span><i data-lucide="send" class="w-4 h-4"></i>`;
+        lucide.createIcons();
+        input.focus();
+      }
+    }
+
+    function showWelcomeMessage() {
+      appendMessageUI('model', 'أهلاً بحضرتك يا فندم معاك احمد من Top Wash ✨ حضرتك محتاج تنظف إيه عشان اقدر اساعد حضرتك ؟');
+    }
+
+    function resetChat() {
+      chatHistory = [];
+      document.getElementById('chatContainer').innerHTML = '';
+      showWelcomeMessage();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      showWelcomeMessage();
+      loadInitialCatalog();
+    });
+  </script>
+</body>
+</html>
