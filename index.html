@@ -350,9 +350,9 @@
       return { status: 'success' };
     }
 
-    // دالة الاتصال المباشر المحدثة بالموديل القياسي المستقر gemini-1.5-flash وعرض أخطاء جوجل بوضوح
+    // تم تحديث الموديل إلى gemini-2.5-flash للتوافق المستقر التام مع واجهة برمجة تطبيقات جوجل
     async function sendGeminiRequestWithFallback(payload) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -512,7 +512,6 @@
         const reply = await callGeminiAgent();
         appendMessageUI('model', reply);
       } catch (err) {
-        // طباعة تفاصيل الخطأ القادم من جوجل مباشرة في الشات لسهولة التشخيص
         appendMessageUI('model', `خطأ من جوجل: ` + err.message);
       } finally {
         requestInProgress = false;
