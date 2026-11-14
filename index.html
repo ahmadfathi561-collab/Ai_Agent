@@ -145,8 +145,8 @@
   <script>
     const SUPABASE_URL = 'https://jlaczyfdaxcdevcozcnx.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_vih4Lf_VGHooa_IxoicuCA_X0Bg2ESc';
-    const GEMINI_KEY = 'AQ.Ab8RN6Ib4fASt7uwZ5MWYLWbLOLqE5Hu9AwzRoyeABjomK0nhQ';
-
+    const GEMINI_KEY = localStorage.getItem('GM_KEY') || '';
+    
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let chatHistory = [];
     let catalogCache = [];
