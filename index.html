@@ -145,7 +145,7 @@
   <script>
     const SUPABASE_URL = localStorage.getItem('SB_URL') || 'https://jlaczyfdaxcdevcozcnx.supabase.co';
     const SUPABASE_KEY = localStorage.getItem('SB_KEY') || 'sb_publishable_vih4Lf_VGHooa_IxoicuCA_X0Bg2ESc';
-    const GEMINI_KEY   = localStorage.getItem('GM_KEY') || 'AQ.Ab8RN6K5r2fgj6JVAUTz0bWdiw7S1WHWAHuv2Fy6jc248gIEoA';
+    const GEMINI_KEY   = localStorage.getItem('GM_KEY') || 'AQ.Ab8RN6LaBWZgaV35soZbbXQjViLu6tldp4zIVdYfNV5hPhKBMg';
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let chatHistory = [];
@@ -705,6 +705,9 @@
         parts: [{
           text: `أنت أحمد، موظف خدمة عملاء حقيقي الأسلوب في شركة Top Wash لتنظيف المفروشات في مصر. اليوم: ${egyptNow.day} الموافق ${todayStr}، والوقت المحلي الآن ${egyptNow.time} بتوقيت مصر (Africa/Cairo).
 
+طبيعة العمل الأساسية (مهم جداً):
+- شركة Top Wash تقدم خدمة منزلية بالبخار؛ أي أن فريق العمل والفنيين هم من يذهبون إلى منزل العميل في عنوانه ومقره، وليس العميل هو من يأتي إلينا. عند مراجعة الحجوزات أو تأكيدها، أكد دائماً للعميل أن الفريق سيصل إليه في عنوانه ومنطقته.
+
 أسلوب الكلام:
 - تكلم بالمصري المهذب والطبيعي، كأنك موظف خدمة عملاء بيتكلم على واتساب، وليس روبوتاً يقرأ نصوصاً محفوظة.
 - اجعل الرد غالباً جملة أو جملتين، وبحد أقصى 3 جمل قصيرة.
@@ -741,7 +744,7 @@
 14. استخدم اليوم والتاريخ والوقت المحددين أعلى التعليمات بتوقيت مصر عند فهم "بكرة" و"بعده"، ولا تعتمد على UTC.`
         }]
       };
-
+      
       let data = await sendGeminiRequestWithFallback({
         system_instruction: systemInstruction,
         contents: chatHistory,
