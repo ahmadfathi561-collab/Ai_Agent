@@ -123,7 +123,7 @@
           <button type="button" onclick="locateCustomerNow()" class="flex-1 min-w-[160px] bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2.5 md:py-3 rounded-xl text-xs md:text-sm font-extrabold shadow-sm">📍 حدد موقعي الآن</button>
           <button type="button" onclick="centerMapOnEgypt()" class="px-3.5 py-2.5 md:py-3 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200">عرض مصر</button>
         </div>
-        <p id="locationStatus" class="text-xs text-slate-600 bg-slate-50 rounded-xl p-3 border border-slate-100">اسمح للمتصفح بالوصول للموقع، أو اضغط على الخريطة لتحديد مكانك يدويًا. حرّك العلامة لتصحيح الموقع.</p>
+        <p id="locationStatus" class="text-xs text-slate-600 bg-slate-50 rounded-xl p-3 border border-slate-100">اسمح للمتصفح بالوصول للموقع، أو اضغط على الخريطة لتحديد مكانك يدويًا.</p>
         <div id="customerMap" class="w-full h-[260px] md:h-[320px] rounded-2xl border border-slate-200 z-0"></div>
         <div class="grid grid-cols-2 gap-2">
           <div><label class="block text-[11px] font-bold text-slate-600 mb-1">خط العرض</label><input id="modalLatitude" readonly dir="ltr" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs" placeholder="لم يتم التحديد"></div>
@@ -145,7 +145,7 @@
   <script>
     const SUPABASE_URL = 'https://jlaczyfdaxcdevcozcnx.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_vih4Lf_VGHooa_IxoicuCA_X0Bg2ESc';
-    const GEMINI_KEY = 'AQ.Ab8RN6KlehknXLkmLtgMsZHTenPrrZE4Ae38dCtVeHMgCn7jnA';
+    const GEMINI_KEY = 'AQ.Ab8RN6Ib4fASt7uwZ5MWYLWbLOLqE5Hu9AwzRoyeABjomK0nhQ';
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let chatHistory = [];
@@ -216,7 +216,7 @@
       const normalized = normalizeEgyptianPhone(value);
       return normalized
         ? { valid: true, phone: normalized }
-        : { valid: false, status: 'invalid_phone', message: 'رقم الهاتف غير مكتمل أو غير صحيح. رقم المحمول المصري يجب أن يتكون من 11 رقمًا ويبدأ بـ 010 أو 011 أو 012 أو 015.' };
+        : { valid: false, status: 'invalid_phone', message: 'رقم الهاتف غير مكتمل أو غير صحيح.' };
     }
 
     async function loadInitialCatalog() {
@@ -271,7 +271,7 @@
       navigator.geolocation.getCurrentPosition(pos => {
         setCustomerMapPoint(pos.coords.latitude, pos.coords.longitude, 'تم تحديد موقعك بنجاح.');
       }, err => {
-        status.textContent = 'تعذر تحديد الموقع تلقائيًا، يرجى النحديد من الخريطة يدويًا.';
+        status.textContent = 'تعذر تحديد الموقع تلقائيًا، يرجى التحديد من الخريطة يدويًا.';
       }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
     }
 
@@ -350,9 +350,9 @@
       return { status: 'success' };
     }
 
-    // دالة الاتصال المباشر الثابتة والمضمونة 100%
+    // دالة الاتصال المباشر المحدثة بالموديل القياسي المستقر gemini-1.5-flash وعرض أخطاء جوجل بوضوح
     async function sendGeminiRequestWithFallback(payload) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -512,7 +512,8 @@
         const reply = await callGeminiAgent();
         appendMessageUI('model', reply);
       } catch (err) {
-        appendMessageUI('model', `عذراً يا فندم، يرجى إعادة إرسال الرسالة.`);
+        // طباعة تفاصيل الخطأ القادم من جوجل مباشرة في الشات لسهولة التشخيص
+        appendMessageUI('model', `خطأ من جوجل: ` + err.message);
       } finally {
         requestInProgress = false;
         btn.disabled = false;
