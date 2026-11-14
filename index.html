@@ -145,7 +145,7 @@
   <script>
     const SUPABASE_URL = localStorage.getItem('SB_URL') || 'https://jlaczyfdaxcdevcozcnx.supabase.co';
     const SUPABASE_KEY = localStorage.getItem('SB_KEY') || 'sb_publishable_vih4Lf_VGHooa_IxoicuCA_X0Bg2ESc';
-    const GEMINI_KEY = 'AQ.Ab8RN6LaBWZgaV35soZbbXQjViLu6tldp4zIVdYfNV5hPhKBMg';
+    const GEMINI_KEY   = localStorage.getItem('GM_KEY') || 'AQ.Ab8RN6KlehknXLkmLtgMsZHTenPrrZE4Ae38dCtVeHMgCn7jnA';
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let chatHistory = [];
@@ -532,7 +532,7 @@
 
     async function sendGeminiRequestWithFallback(payload) {
       if (WORKING_MODEL) {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/${WORKING_MODEL}:generateContent?key=${GEMINI_KEY}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -744,7 +744,7 @@
 14. استخدم اليوم والتاريخ والوقت المحددين أعلى التعليمات بتوقيت مصر عند فهم "بكرة" و"بعده"، ولا تعتمد على UTC.`
         }]
       };
-      
+
       let data = await sendGeminiRequestWithFallback({
         system_instruction: systemInstruction,
         contents: chatHistory,
