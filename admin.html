@@ -342,9 +342,7 @@
       if (!interactionsError) renderInteractions(window.twInteractions);
       else document.getElementById('interactionsContainer').innerHTML = `<div class="text-amber-400 text-xs p-4 space-y-2"><b>تعذر تحميل الشكاوى والطلبات.</b><p dir="ltr" class="text-left break-all text-zinc-400">${escapeHtml(interactionsError.message || interactionsError.code || 'Unknown error')}</p></div>`;
 
-      if (document.getElementById('view-conversations')?.classList.contains('hidden')) {
-        await fetchConversationData();
-      }
+      await fetchConversationData();
     }
 
     function renderBookings(bookings) {
@@ -446,6 +444,28 @@
       return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     }
 
+    function renderNotesList(rawNotes) {
+      const text = String(rawNotes || '').trim();
+      if (!text) return '';
+      const parts = text
+        .split(/\s*---\s*|\n+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      return `<div class="border-t border-borderDark pt-2.5 flex flex-col gap-2 text-xs">${parts.map(part => {
+        const isCustomer = /^ملاحظة من العميل\s*:/i.test(part);
+        const cleanBody = part
+          .replace(/^ملاحظات الإدارة\s*:\s*/i, '')
+          .replace(/^ملاحظة من العميل\s*:\s*/i, '')
+          .trim();
+        const label = isCustomer ? 'ملاحظة من العميل:' : 'ملاحظات الإدارة:';
+        const labelClass = isCustomer
+          ? 'text-amber-600 dark:text-amber-300 font-bold'
+          : 'text-purple-600 dark:text-purple-300 font-bold';
+        return `<div class="block w-full rounded-lg bg-zinc-500/10 px-3 py-2 leading-6"><span class="${labelClass}">${escapeHtml(label)}</span> <span class="whitespace-pre-wrap">${escapeHtml(cleanBody)}</span></div>`;
+      }).join('')}</div>`;
+    }
+
     const interactionStatusLabels = {new:'جديدة', reviewing:'قيد المراجعة', contacting:'جاري التواصل', technical_team:'محولة للفريق الفني', resolved:'تم الحل', closed:'مغلقة'};
     const categoryLabels = {cleaning_complaint:'شكوى تنظيف', technician_complaint:'شكوى فني', response_complaint:'مشكلة في الرد', reschedule_request:'طلب تعديل موعد', callback_request:'طلب معاودة اتصال', extra_request:'طلب إضافي', general_note:'ملاحظة عامة', other:'أخرى'};
 
@@ -455,7 +475,7 @@
       document.getElementById('statNewInteractions').textContent = items.filter(x=>x.status==='new').length;
       document.getElementById('statOpenInteractions').textContent = items.filter(x=>!['new','resolved','closed'].includes(x.status)).length;
       document.getElementById('statResolvedInteractions').textContent = items.filter(x=>['resolved','closed'].includes(x.status)).length;
-      const filtered = items.filter(x => (filter==='all'||x.status===filter) && [x.customer_name,x.customer_phone,x.subject,x.details].join(' ').toLowerCase().includes(q));
+      const filtered = items.filter(x => (filter==='all'||x.status===filter) && [x.customer_name,x.customer_phone,x.subject,x.details,x.admin_notes].join(' ').toLowerCase().includes(q));
       const box = document.getElementById('interactionsContainer');
       if (!filtered.length) { box.innerHTML='<div class="bg-cardDark border border-borderDark rounded-2xl p-8 text-center text-zinc-500 text-sm">لا توجد شكاوى أو طلبات مطابقة.</div>'; return; }
       box.innerHTML = filtered.map(x => `<article class="bg-cardDark border border-borderDark rounded-2xl p-4 space-y-3 shadow-sm">
@@ -463,7 +483,7 @@
         <select onchange="updateInteractionStatus('${x.id}',this.value)" class="bg-bgDark border border-borderDark rounded-lg px-3 py-2 text-xs focus:outline-none">${Object.entries(interactionStatusLabels).map(([k,v])=>`<option value="${k}" ${x.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
         <p class="text-sm leading-7 whitespace-pre-wrap">${escapeHtml(x.details)}</p>
         <div class="flex flex-wrap justify-end gap-4"><button onclick="addInteractionNote('${x.id}')" class="text-xs text-purple-600 dark:text-purple-400 hover:underline">إضافة ملاحظة إدارية</button><button onclick="deleteInteraction('${x.id}')" class="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-300 hover:underline">حذف الشكوى</button></div>
-        ${x.admin_notes?`<div class="border-t border-borderDark pt-2 text-xs text-zinc-400">ملاحظات الإدارة: ${escapeHtml(x.admin_notes)}</div>`:''}
+        ${renderNotesList(x.admin_notes)}
       </article>`).join('');
     }
 
@@ -484,8 +504,9 @@
     }
     async function addInteractionNote(id) {
       openAppModal('إضافة ملاحظة إدارية','اكتب ملاحظة داخلية لمتابعة الشكوى أو الطلب.',`<label class="block text-xs text-zinc-400 mb-1">الملاحظة</label><textarea id="adminNoteInput" rows="5" maxlength="2000" placeholder="اكتب الملاحظة هنا..." class="w-full bg-bgDark border border-borderDark rounded-xl px-3 py-3 text-sm focus:outline-none"></textarea><div class="text-left text-[11px] text-zinc-400"><span id="adminNoteCount">0</span> / 2000</div>`, 'حفظ الملاحظة',async()=>{
-        const note=document.getElementById('adminNoteInput').value.trim();if(!note){showToast('اكتب الملاحظة أولاً.','error');return false;}
-        const current=(window.twInteractions||[]).find(x=>x.id===id);const notes=[current?.admin_notes,note].filter(Boolean).join('\n---\n');
+        const rawNote=document.getElementById('adminNoteInput').value.trim();if(!rawNote){showToast('اكتب الملاحظة أولاً.','error');return false;}
+        const formattedNote = /^ملاحظات الإدارة\s*:/i.test(rawNote) ? rawNote : `ملاحظات الإدارة: ${rawNote}`;
+        const current=(window.twInteractions||[]).find(x=>x.id===id);const notes=[current?.admin_notes,formattedNote].filter(Boolean).join('\n');
         const {error}=await supabaseClient.from('customer_interactions').update({admin_notes:notes,updated_at:new Date().toISOString()}).eq('id',id);
         if(error){showToast('تعذر حفظ الملاحظة: '+error.message,'error');return false;}closeAppModal();showToast('تم حفظ الملاحظة بنجاح','success');fetchAllData();
       });
