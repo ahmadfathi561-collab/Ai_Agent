@@ -74,7 +74,7 @@
 
     <!-- Bottom Input Bar -->
     <div class="p-3 md:p-3.5 bg-white border-t border-slate-100 shrink-0">
-      <form onsubmit="sendMessage(event)" class="flex items-center gap-2">
+      <form onsubmit="sendMessage(event)" class="flex items-end gap-2">
         <!-- Location Helper Button -->
         <button
           type="button"
@@ -86,13 +86,15 @@
           <span class="hidden sm:inline">إرسال العنوان</span>
         </button>
 
-        <input
+        <textarea
           id="userInput"
-          type="text"
+          rows="1"
           placeholder="اكتب رسالتك هنا..."
-          class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-2xl px-3.5 md:px-4 py-2.5 md:py-3 text-xs md:text-sm focus:outline-none focus:border-purple-500 focus:bg-white transition"
+          onkeydown="handleInputKeydown(event)"
+          oninput="autoResizeInput(this)"
+          class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-2xl px-3.5 md:px-4 py-2.5 md:py-3 text-xs md:text-sm focus:outline-none focus:border-purple-500 focus:bg-white transition resize-none max-h-32 leading-relaxed"
           autocomplete="off"
-        />
+        ></textarea>
 
         <button
           id="sendBtn"
@@ -145,8 +147,7 @@
   <script>
     const SUPABASE_URL = 'https://jlaczyfdaxcdevcozcnx.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_vih4Lf_VGHooa_IxoicuCA_X0Bg2ESc';
-    const GEMINI_KEY = localStorage.getItem('GM_KEY') || '';
-    
+
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let chatHistory = [];
     let catalogCache = [];
@@ -155,7 +156,34 @@
     let customerMapMarker = null;
     let selectedCustomerCoordinates = null;
     let requestInProgress = false;
-    const conversationSessionId = (crypto.randomUUID ? crypto.randomUUID() : `tw-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    let conversationSessionId = createSessionId();
+    let cachedWorkingModel = '';
+    let lastSubmittedInteractionId = null;
+
+    function createSessionId() {
+      return (crypto.randomUUID ? crypto.randomUUID() : `tw-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    }
+
+    function getGeminiKey() {
+      return (localStorage.getItem('GM_KEY') || '').trim();
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function handleInputKeydown(e) {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        sendMessage(e);
+      }
+    }
+
+    function autoResizeInput(el) {
+      if (!el) return;
+      el.style.height = 'auto';
+      el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
+    }
 
     async function logConversation(event) {
       try {
@@ -216,7 +244,23 @@
       const normalized = normalizeEgyptianPhone(value);
       return normalized
         ? { valid: true, phone: normalized }
-        : { valid: false, status: 'invalid_phone', message: 'رقم الهاتف غير مكتمل أو غير صحيح.' };
+        : { valid: false, status: 'incomplete_or_invalid_phone', message: 'رقم الهاتف ناقص عن 11 رقم أو غير صحيح، يرجى مراجعة الرقم وإرساله كاملاً من 11 رقم.' };
+    }
+
+    function getNameParts(value) {
+      return String(value || '')
+        .trim()
+        .replace(/[^\p{L}\s]/gu, ' ')
+        .split(/\s+/)
+        .filter(Boolean);
+    }
+
+    function validateClientName(value) {
+      const parts = getNameParts(value);
+      if (parts.length < 2) {
+        return { valid: false, status: 'single_name_not_allowed', message: 'الاسم أحادي، يجب أن يرسل العميل الاسم ثنائي على الأقل.' };
+      }
+      return { valid: true, parts, normalizedName: parts.join(' ') };
     }
 
     async function loadInitialCatalog() {
@@ -282,17 +326,54 @@
       const { latitude, longitude } = selectedCustomerCoordinates;
       lastSharedLocationUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
       closeMapModal();
-      document.getElementById('userInput').value = `📍 عنواني بالتفصيل: ${address}\nإحداثيات موقعي: ${latitude}, ${longitude}\nرابط Google Maps: ${lastSharedLocationUrl}`;
+      const input = document.getElementById('userInput');
+      input.value = `📍 عنواني بالتفصيل: ${address}\nإحداثيات موقعي: ${latitude}, ${longitude}\nرابط Google Maps: ${lastSharedLocationUrl}`;
+      autoResizeInput(input);
       sendMessage(new Event('submit'));
       document.getElementById('modalDetailedAddress').value = '';
     }
 
+    function formatAdminDetails(summaryText, detailsText, orderMatchNote) {
+      const cleanSummary = String(summaryText || '').trim();
+      const cleanDetails = String(detailsText || '').trim();
+      const cleanOrderNote = String(orderMatchNote || '').trim();
+      const baseSummary = cleanSummary || cleanDetails;
+      const baseDetails = cleanDetails || cleanSummary;
+      const lines = [
+        `ملخص الشكوى: ${baseSummary}`,
+        `التفاصيل الموضحة: ${baseDetails}`
+      ];
+      if (cleanOrderNote) {
+        lines.push(`مطابقة الأوردر السابق: ${cleanOrderNote}`);
+      }
+      return lines.join('\n');
+    }
+
+    async function fetchCustomerBookingsByCriteria(phone, nameQuery) {
+      let query = supabaseClient.from('bookings').select('*').order('created_at', { ascending: false }).limit(10);
+      if (phone) {
+        query = query.eq('client_phone', phone);
+      } else if (nameQuery) {
+        query = query.ilike('client_name', `%${nameQuery}%`);
+      }
+      const { data, error } = await query;
+      return { data: data || [], error };
+    }
+
     async function executeToolCall(call) {
-      const { name, args } = call;
+      const { name, args = {} } = call;
 
       if (name === 'request_customer_location') {
         openMapModal();
-        return { status: 'location_picker_opened', message: 'تم فتح خريطة تحديد الموقع للعميل.' };
+        const result = { status: 'location_picker_opened', message: 'تم فتح خريطة تحديد الموقع للعميل.' };
+        await logConversation({
+          speaker: 'tool',
+          event_type: 'tool_call',
+          tool_name: name,
+          tool_data: { args, result },
+          message: `فتح خريطة تحديد الموقع للعميل`
+        });
+        return result;
       }
 
       if (name === 'calculate_cleaning_price') {
@@ -311,30 +392,420 @@
             missingItems.push(reqItem.item_key);
           }
         }
-        return missingItems.length
+        const result = missingItems.length
           ? { status: 'missing_catalog_items', missing_items: missingItems }
           : { status: 'success', total_price: total, breakdown: details.join(' + ') };
+
+        await logConversation({
+          speaker: 'tool',
+          event_type: 'tool_call',
+          tool_name: name,
+          tool_data: { args, result },
+          message: `حساب السعر: ${result.breakdown || JSON.stringify(result)}`
+        });
+        return result;
       }
 
       if (name === 'check_schedule_by_area') {
         const clientArea = (args.client_area || '').trim();
         const { data: zones } = await supabaseClient.from('zones').select('*');
-        const matchedZone = zones?.find(z => z.covered_areas.some(a => clientArea.includes(a) || a.includes(clientArea)));
+        const matchedZone = zones?.find(z => (z.covered_areas || []).some(a => clientArea.includes(a) || a.includes(clientArea)));
         const today = getEgyptDateTime().date;
-        if (!matchedZone) return { status: 'available', message: 'متاح الحجز في الفترات المعتادة.' };
-        const { data: existingBookings } = await supabaseClient.from('bookings').select('booking_date, time_slot, area').eq('zone_id', matchedZone.id).gte('booking_date', today);
-        return { status: 'matched_zone', zone_name: matchedZone.zone_name, team_current_bookings: existingBookings || [] };
+        let result;
+        if (!matchedZone) {
+          result = { status: 'available', message: 'متاح الحجز في الفترات المعتادة.' };
+        } else {
+          const { data: existingBookings } = await supabaseClient.from('bookings').select('booking_date, time_slot, area').eq('zone_id', matchedZone.id).gte('booking_date', today);
+          result = { status: 'matched_zone', zone_name: matchedZone.zone_name, team_current_bookings: existingBookings || [] };
+        }
+
+        await logConversation({
+          speaker: 'tool',
+          event_type: 'tool_call',
+          tool_name: name,
+          tool_data: { args, result },
+          message: `فحص المواعيد للمنطقة (${clientArea}): ${result.zone_name || result.message}`
+        });
+        return result;
+      }
+
+      if (name === 'submit_customer_interaction') {
+        const phoneNormalized = normalizeEgyptianPhone(args.customer_phone);
+        if (args.customer_phone && !phoneNormalized) {
+          return phoneValidationResult(args.customer_phone);
+        }
+
+        const cleanName = String(args.customer_name || '').trim() || 'عميل';
+        const cleanSubject = String(args.subject || '').trim() || 'شكوى أو طلب عميل';
+
+        const { data: prevBookings } = await fetchCustomerBookingsByCriteria(
+          phoneNormalized,
+          cleanName !== 'عميل' ? cleanName : ''
+        );
+        const latestBooking = (prevBookings && prevBookings[0]) || null;
+        const previousItemsSummary = latestBooking?.items_summary || '';
+        const combinedText = `${cleanSubject} ${args.summary || ''} ${args.details || ''}`.toLowerCase();
+
+        let orderMatchNote = '';
+        let serviceMismatch = false;
+        if (previousItemsSummary) {
+          const prevLower = previousItemsSummary.toLowerCase();
+          const mentionsMattress = /مرتب|مراتب/.test(combinedText);
+          const mentionsCarpet = /سجاد|سجاده|سجادة/.test(combinedText);
+          const mentionsSofa = /انتريه|ركنه|ركنة|صالون|كنب/.test(combinedText);
+
+          if (mentionsMattress && !/مرتب|مراتب/.test(prevLower)) {
+            serviceMismatch = true;
+            orderMatchNote = `الأوردر السابق المسجل للعميل كان (${previousItemsSummary}) بتاريخ ${latestBooking.booking_date || ''} ولم يتضمن مراتب.`;
+          } else if (mentionsCarpet && !/سجاد|سجاده|سجادة/.test(prevLower)) {
+            serviceMismatch = true;
+            orderMatchNote = `الأوردر السابق المسجل للعميل كان (${previousItemsSummary}) بتاريخ ${latestBooking.booking_date || ''} ولم يتضمن سجاد.`;
+          } else if (mentionsSofa && !/انتريه|ركنه|ركنة|صالون|كنب/.test(prevLower)) {
+            serviceMismatch = true;
+            orderMatchNote = `الأوردر السابق المسجل للعميل كان (${previousItemsSummary}) بتاريخ ${latestBooking.booking_date || ''} ولم يتضمن أنترية/صالون.`;
+          } else {
+            orderMatchNote = `مطابق للأوردر السابق (${previousItemsSummary}).`;
+          }
+        }
+
+        const formattedDetails = formatAdminDetails(args.summary, args.details, orderMatchNote);
+        const allowedCategories = [
+          'cleaning_complaint',
+          'technician_complaint',
+          'response_complaint',
+          'reschedule_request',
+          'callback_request',
+          'extra_request',
+          'general_note',
+          'other'
+        ];
+        const category = allowedCategories.includes(args.category) ? args.category : 'other';
+        const allowedPriorities = ['low', 'normal', 'high', 'urgent'];
+        const priority = allowedPriorities.includes(args.priority) ? args.priority : 'high';
+
+        const { data, error } = await supabaseClient
+          .from('customer_interactions')
+          .insert([{
+            customer_name: cleanName,
+            customer_phone: phoneNormalized || null,
+            category,
+            priority,
+            subject: cleanSubject,
+            details: formattedDetails,
+            status: 'new'
+          }])
+          .select()
+          .single();
+
+        if (!error && data?.id) {
+          lastSubmittedInteractionId = data.id;
+        }
+
+        const result = error
+          ? { status: 'error', message: error.message }
+          : {
+              status: 'interaction_saved',
+              interaction_details: data,
+              previous_booking: latestBooking,
+              previous_items_summary: previousItemsSummary,
+              service_mismatch_with_last_order: serviceMismatch
+            };
+
+        await logConversation({
+          speaker: 'tool',
+          event_type: 'interaction_submitted',
+          tool_name: name,
+          tool_data: { args, result },
+          customer_name: cleanName,
+          customer_phone: phoneNormalized || null,
+          message: error
+            ? `خطأ أثناء تسجيل الشكوى/الطلب: ${error.message}`
+            : `تم تسجيل (${cleanSubject}) للعميل ${cleanName} في قائمة الشكاوى والطلبات`
+        });
+        return result;
+      }
+
+      if (name === 'append_interaction_note') {
+        const phoneNormalized = normalizeEgyptianPhone(args.customer_phone);
+        const nameQuery = String(args.customer_name || '').trim();
+        const noteBody = String(args.customer_note || args.note || '').trim();
+        if (!noteBody) {
+          return { status: 'error', message: 'لا يوجد نص ملاحظة من العميل لإضافته.' };
+        }
+
+        let targetInteraction = null;
+        if (args.interaction_id) {
+          const { data } = await supabaseClient
+            .from('customer_interactions')
+            .select('*')
+            .eq('id', args.interaction_id)
+            .single();
+          targetInteraction = data || null;
+        } else if (lastSubmittedInteractionId) {
+          const { data } = await supabaseClient
+            .from('customer_interactions')
+            .select('*')
+            .eq('id', lastSubmittedInteractionId)
+            .single();
+          targetInteraction = data || null;
+        }
+
+        if (!targetInteraction) {
+          let q = supabaseClient
+            .from('customer_interactions')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(5);
+          if (phoneNormalized) q = q.eq('customer_phone', phoneNormalized);
+          else if (nameQuery) q = q.ilike('customer_name', `%${nameQuery}%`);
+          const { data } = await q;
+          targetInteraction = (data && data[0]) || null;
+        }
+
+        if (!targetInteraction) {
+          return {
+            status: 'not_found',
+            message: 'لم يتم العثور على شكوى سابقة للعميل لإلحاق الملاحظة بها.'
+          };
+        }
+
+        const formattedCustomerNote = `ملاحظة من العميل: ${noteBody}`;
+        const existingNotes = String(targetInteraction.admin_notes || '').trim();
+        const updatedNotes = existingNotes
+          ? `${existingNotes}\n${formattedCustomerNote}`
+          : formattedCustomerNote;
+
+        const updates = {
+          admin_notes: updatedNotes,
+          updated_at: new Date().toISOString()
+        };
+        if (phoneNormalized && !targetInteraction.customer_phone) {
+          updates.customer_phone = phoneNormalized;
+        }
+        if (nameQuery && (!targetInteraction.customer_name || targetInteraction.customer_name === 'عميل')) {
+          updates.customer_name = nameQuery;
+        }
+
+        const { data: updated, error } = await supabaseClient
+          .from('customer_interactions')
+          .update(updates)
+          .eq('id', targetInteraction.id)
+          .select()
+          .single();
+
+        if (!error && updated?.id) {
+          lastSubmittedInteractionId = updated.id;
+        }
+
+        const result = error
+          ? { status: 'error', message: error.message }
+          : { status: 'note_appended_to_existing_interaction', interaction_details: updated };
+
+        await logConversation({
+          speaker: 'tool',
+          event_type: 'interaction_note_appended',
+          tool_name: name,
+          tool_data: { args, result },
+          customer_name: updated?.customer_name || targetInteraction.customer_name,
+          customer_phone: updated?.customer_phone || targetInteraction.customer_phone,
+          message: error
+            ? `خطأ أثناء إضافة ملاحظة العميل: ${error.message}`
+            : `تم إلحاق ملاحظة العميل بنفس الشكوى (${updated.subject})`
+        });
+        return result;
+      }
+
+      if (name === 'lookup_customer_bookings') {
+        const phone = normalizeEgyptianPhone(args.client_phone);
+        const nameQuery = String(args.client_name || '').trim();
+        const { data, error } = await fetchCustomerBookingsByCriteria(phone, nameQuery);
+
+        let duplicateNameFound = false;
+        if (!error && nameQuery) {
+          const { data: sameNameRows } = await supabaseClient
+            .from('bookings')
+            .select('id, client_name, client_phone')
+            .ilike('client_name', `%${nameQuery}%`)
+            .limit(10);
+          const distinctPhones = new Set((sameNameRows || []).map(r => r.client_phone).filter(Boolean));
+          if ((sameNameRows || []).length > 0 && (!phone || (distinctPhones.size > 0 && !distinctPhones.has(phone)))) {
+            duplicateNameFound = true;
+          }
+        }
+
+        const result = error
+          ? { status: 'error', message: error.message }
+          : {
+              status: 'success',
+              bookings: data || [],
+              duplicate_name_found: duplicateNameFound,
+              message: duplicateNameFound
+                ? 'يوجد اسم مشابه مسجل بالفعل؛ يُفضل طلب الاسم ثلاثي للتأكيد وعدم التداخل.'
+                : undefined
+            };
+
+        await logConversation({
+          speaker: 'tool',
+          event_type: 'tool_call',
+          tool_name: name,
+          tool_data: { args, result },
+          customer_name: args.client_name || null,
+          customer_phone: phone || null,
+          message: `بحث عن حجوزات العميل (${phone || nameQuery || 'الأحدث'}): وُجد ${(data || []).length} حجز`
+        });
+        return result;
+      }
+
+      if (name === 'update_booking_schedule') {
+        const bookingId = args.booking_id;
+        const phone = normalizeEgyptianPhone(args.client_phone);
+        const nameQuery = String(args.client_name || '').trim();
+
+        let targetBooking = null;
+        if (bookingId) {
+          const { data } = await supabaseClient.from('bookings').select('*').eq('id', bookingId).single();
+          targetBooking = data || null;
+        } else {
+          let q = supabaseClient.from('bookings').select('*').order('created_at', { ascending: false }).limit(5);
+          if (phone) q = q.eq('client_phone', phone);
+          else if (nameQuery) q = q.ilike('client_name', `%${nameQuery}%`);
+          const { data } = await q;
+          targetBooking = (data && data[0]) || null;
+        }
+
+        if (!targetBooking) {
+          const resNotFound = { status: 'not_found', message: 'لم يتم العثور على حجز مطابق لتعديله.' };
+          await logConversation({
+            speaker: 'tool',
+            event_type: 'tool_call',
+            tool_name: name,
+            tool_data: { args, result: resNotFound },
+            message: resNotFound.message
+          });
+          return resNotFound;
+        }
+
+        const updates = {};
+        if (args.booking_date) updates.booking_date = String(args.booking_date).trim();
+        if (args.time_slot) updates.time_slot = String(args.time_slot).trim();
+        if (args.area) updates.area = String(args.area).trim();
+        if (args.detailed_address) updates.detailed_address = String(args.detailed_address).trim();
+        if (args.items_summary) updates.items_summary = String(args.items_summary).trim();
+        if (args.total_price !== undefined && Number.isFinite(Number(args.total_price))) updates.total_price = Number(args.total_price);
+
+        const { data: updated, error } = await supabaseClient
+          .from('bookings')
+          .update(updates)
+          .eq('id', targetBooking.id)
+          .select()
+          .single();
+
+        const result = error
+          ? { status: 'error', message: error.message }
+          : { status: 'updated_successfully', booking_details: updated };
+
+        await logConversation({
+          speaker: 'tool',
+          event_type: 'booking_updated',
+          tool_name: name,
+          tool_data: { args, result },
+          customer_name: updated?.client_name || targetBooking.client_name,
+          customer_phone: updated?.client_phone || targetBooking.client_phone,
+          message: error
+            ? `خطأ أثناء تعديل الحجز: ${error.message}`
+            : `تم تعديل موعد حجز (${updated.client_name}) إلى ${updated.booking_date} - ${updated.time_slot}`
+        });
+        return result;
+      }
+
+      if (name === 'update_booking_status') {
+        const bookingId = args.booking_id;
+        const phone = normalizeEgyptianPhone(args.client_phone);
+        const nameQuery = String(args.client_name || '').trim();
+        const allowedStatuses = ['confirmed', 'pending', 'cancelled', 'completed'];
+        const nextStatus = allowedStatuses.includes(args.status) ? args.status : 'pending';
+
+        let targetBooking = null;
+        if (bookingId) {
+          const { data } = await supabaseClient.from('bookings').select('*').eq('id', bookingId).single();
+          targetBooking = data || null;
+        } else {
+          let q = supabaseClient.from('bookings').select('*').order('created_at', { ascending: false }).limit(5);
+          if (phone) q = q.eq('client_phone', phone);
+          else if (nameQuery) q = q.ilike('client_name', `%${nameQuery}%`);
+          const { data } = await q;
+          targetBooking = (data && data[0]) || null;
+        }
+
+        if (!targetBooking) {
+          const resNotFound = { status: 'not_found', message: 'لم يتم العثور على حجز مطابق لتغيير حالته.' };
+          await logConversation({
+            speaker: 'tool',
+            event_type: 'tool_call',
+            tool_name: name,
+            tool_data: { args, result: resNotFound },
+            message: resNotFound.message
+          });
+          return resNotFound;
+        }
+
+        const { data: updated, error } = await supabaseClient
+          .from('bookings')
+          .update({ status: nextStatus })
+          .eq('id', targetBooking.id)
+          .select()
+          .single();
+
+        const result = error
+          ? { status: 'error', message: error.message }
+          : { status: 'status_updated', booking_details: updated };
+
+        await logConversation({
+          speaker: 'tool',
+          event_type: 'booking_status_updated',
+          tool_name: name,
+          tool_data: { args, result },
+          customer_name: updated?.client_name || targetBooking.client_name,
+          customer_phone: updated?.client_phone || targetBooking.client_phone,
+          message: error
+            ? `خطأ أثناء تغيير حالة الحجز: ${error.message}`
+            : `تم تغيير حالة حجز (${updated.client_name}) إلى: ${nextStatus}`
+        });
+        return result;
       }
 
       if (name === 'confirm_booking') {
+        const nameCheck = validateClientName(args.client_name);
+        if (!nameCheck.valid) {
+          return nameCheck;
+        }
+
         const phoneCheck = phoneValidationResult(args.client_phone);
         if (!phoneCheck.valid) return phoneCheck;
+
+        const { data: existingSameName } = await supabaseClient
+          .from('bookings')
+          .select('id, client_name, client_phone')
+          .ilike('client_name', nameCheck.normalizedName)
+          .limit(5);
+
+        const hasOtherPhoneSameName = (existingSameName || []).some(
+          row => row.client_phone && row.client_phone !== phoneCheck.phone
+        );
+        if (nameCheck.parts.length === 2 && hasOtherPhoneSameName && !args.allow_duplicate_two_part_name) {
+          return {
+            valid: false,
+            status: 'duplicate_two_part_name',
+            message: 'الاسم الثنائي ده مسجل لعميل آخر بالفعل؛ اطلب من العميل يكتب الاسم ثلاثي للتأكيد.'
+          };
+        }
+
         const { data, error } = await supabaseClient.from('bookings').insert([{
-          client_name: String(args.client_name).trim(),
+          client_name: nameCheck.normalizedName,
           client_phone: phoneCheck.phone,
           area: String(args.area).trim(),
           detailed_address: args.detailed_address || null,
-          maps_url: normalizeMapsUrl(args.maps_url),
+          maps_url: normalizeMapsUrl(args.maps_url || lastSharedLocationUrl),
           latitude: args.latitude || null,
           longitude: args.longitude || null,
           booking_date: args.booking_date,
@@ -343,31 +814,105 @@
           total_price: Number(args.total_price),
           status: 'confirmed'
         }]).select().single();
-        if (error) return { status: 'error', message: error.message };
-        return { status: 'booked_successfully', booking_details: data };
+
+        const result = error ? { status: 'error', message: error.message } : { status: 'booked_successfully', booking_details: data };
+        await logConversation({
+          speaker: 'tool',
+          event_type: 'booking_confirmed',
+          tool_name: name,
+          tool_data: { args, result },
+          customer_name: nameCheck.normalizedName,
+          customer_phone: phoneCheck.phone,
+          message: error ? `خطأ أثناء تأكيد الحجز: ${error.message}` : `تم تأكيد الحجز للعميل ${nameCheck.normalizedName} (${phoneCheck.phone}) - الإجمالي: ${args.total_price} ج.م`
+        });
+        return result;
       }
 
       return { status: 'success' };
     }
 
-    // تم ضبط الموديل على الإصدار الثابت المعتمد رسميا gemini-2.5-flash بدون أي أخطاء
-    async function sendGeminiRequestWithFallback(payload) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (data.error) {
-        throw new Error(data.error.message || 'API Error');
+    function isTextChatModel(name) {
+      const clean = String(name || '').toLowerCase();
+      if (!clean.startsWith('gemini-')) return false;
+      return !/(tts|audio|imagen|veo|embedding|robotics|computer-use|live)/.test(clean);
+    }
+
+    async function discoverAvailableModels(apiKey) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+        const data = await res.json();
+        if (!res.ok || !Array.isArray(data.models)) return [];
+        return data.models
+          .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+          .map(m => String(m.name || '').replace(/^models\//, ''))
+          .filter(isTextChatModel);
+      } catch {
+        return [];
       }
-      return data;
+    }
+
+    async function sendGeminiRequestWithFallback(payload) {
+      const apiKey = getGeminiKey();
+      if (!apiKey) {
+        throw new Error('مفتاح Gemini API غير مضبوط. افتح صفحة الإدارة -> إعدادات الربط وأضف المفتاح.');
+      }
+
+      const preferred = [
+        cachedWorkingModel,
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-lite'
+      ].filter(Boolean);
+
+      const discovered = await discoverAvailableModels(apiKey);
+      const candidates = [...new Set([...preferred, ...discovered])].filter(isTextChatModel);
+
+      let lastError = null;
+
+      for (let attempt = 0; attempt < 2; attempt++) {
+        for (const model of candidates) {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+
+          if (!res.ok || data.error) {
+            const msg = data.error?.message || `HTTP ${res.status}`;
+            lastError = new Error(msg);
+            if (
+              res.status === 404 ||
+              res.status === 429 ||
+              res.status === 503 ||
+              /not found|not supported|quota|limit:\s*0|high demand|overloaded|unavailable|models\//i.test(msg)
+            ) {
+              if (cachedWorkingModel === model) cachedWorkingModel = '';
+              continue;
+            }
+            throw lastError;
+          }
+
+          if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+            cachedWorkingModel = model;
+            return data;
+          }
+          lastError = new Error('لم يرجع النموذج ردًا نصيًا صالحًا.');
+        }
+        if (attempt === 0) await sleep(1000);
+      }
+
+      throw lastError || new Error('تعذر الاتصال بنموذج Gemini.');
     }
 
     async function callGeminiAgent() {
       if (!catalogCache.length) await loadInitialCatalog();
       const egyptNow = getEgyptDateTime();
+      const catalogText = catalogCache.length
+        ? catalogCache.map(c => `- ${c.item_name_ar} (كود: ${c.item_key}): ${c.price} ج.م`).join('\n')
+        : 'لا توجد خدمات محملة حاليًا';
+
       const toolsDeclaration = [{
         functionDeclarations: [
           {
@@ -402,8 +947,94 @@
             parameters: { type: 'OBJECT', properties: {} }
           },
           {
+            name: 'submit_customer_interaction',
+            description: 'تسجيل شكوى أو طلب جديد لأول مرة في قائمة الشكاوى والطلبات بالإدارة بعد التحقق من الأوردر السابق وصياغة عنوان واضح وملخص بسيط وتفاصيل مفهومة.',
+            parameters: {
+              type: 'OBJECT',
+              properties: {
+                customer_name: { type: 'STRING' },
+                customer_phone: { type: 'STRING' },
+                category: {
+                  type: 'STRING',
+                  enum: [
+                    'cleaning_complaint',
+                    'technician_complaint',
+                    'response_complaint',
+                    'reschedule_request',
+                    'callback_request',
+                    'extra_request',
+                    'general_note',
+                    'other'
+                  ]
+                },
+                priority: { type: 'STRING', enum: ['low', 'normal', 'high', 'urgent'] },
+                subject: { type: 'STRING', description: 'عنوان واضح ومباشر للشكوى أو الطلب' },
+                summary: { type: 'STRING', description: 'ملخص بسيط ومفهوم للمشكلة أو الطلب في سطر أو سطرين' },
+                details: { type: 'STRING', description: 'تفاصيل واضحة ومرتبة ومفهومة للشخص المسؤول في الإدارة' }
+              },
+              required: ['subject', 'summary', 'details']
+            }
+          },
+          {
+            name: 'append_interaction_note',
+            description: 'إلحاق ملاحظة أو طلب متابعة أو موعد تواصل جديد بنفس الشكوى القائمة للعميل بدلاً من إنشاء شكوى جديدة منفصلة.',
+            parameters: {
+              type: 'OBJECT',
+              properties: {
+                interaction_id: { type: 'STRING' },
+                customer_name: { type: 'STRING' },
+                customer_phone: { type: 'STRING' },
+                customer_note: { type: 'STRING', description: 'نص ملاحظة العميل أو طلب المتابعة واضح ومفهوم' }
+              },
+              required: ['customer_note']
+            }
+          },
+          {
+            name: 'lookup_customer_bookings',
+            description: 'البحث عن حجوزات العميل الحالية والسابقة في قاعدة البيانات قبل التعديل أو الإلغاء أو التعليق أو التحقق من الأوردر السابق للعميل.',
+            parameters: {
+              type: 'OBJECT',
+              properties: {
+                client_phone: { type: 'STRING' },
+                client_name: { type: 'STRING' }
+              }
+            }
+          },
+          {
+            name: 'update_booking_schedule',
+            description: 'تعديل أو تأجيل موعد أو فترة أو تفاصيل حجز قائم بالفعل في قاعدة البيانات.',
+            parameters: {
+              type: 'OBJECT',
+              properties: {
+                booking_id: { type: 'STRING' },
+                client_phone: { type: 'STRING' },
+                client_name: { type: 'STRING' },
+                booking_date: { type: 'STRING', description: 'التاريخ الجديد بصيغة YYYY-MM-DD' },
+                time_slot: { type: 'STRING', description: 'الفترة الجديدة مثل: الفترة الصباحية أو الفترة المسائية' },
+                area: { type: 'STRING' },
+                detailed_address: { type: 'STRING' },
+                items_summary: { type: 'STRING' },
+                total_price: { type: 'NUMBER' }
+              }
+            }
+          },
+          {
+            name: 'update_booking_status',
+            description: 'تغيير حالة حجز قائم إلى ملغي (cancelled) أو معلق (pending) أو مؤكد (confirmed) أو مكتمل (completed).',
+            parameters: {
+              type: 'OBJECT',
+              properties: {
+                booking_id: { type: 'STRING' },
+                client_phone: { type: 'STRING' },
+                client_name: { type: 'STRING' },
+                status: { type: 'STRING', enum: ['confirmed', 'pending', 'cancelled', 'completed'] }
+              },
+              required: ['status']
+            }
+          },
+          {
             name: 'confirm_booking',
-            description: 'تأكيد الحجز.',
+            description: 'تأكيد حجز جديد.',
             parameters: {
               type: 'OBJECT',
               properties: {
@@ -427,7 +1058,30 @@
 
       const systemInstruction = {
         parts: [{
-          text: `أنت أحمد، موظف خدمة عملاء في شركة Top Wash لتنظيف المفروشات في مصر. اليوم: ${egyptNow.day} الموافق ${egyptNow.date} والوقت ${egyptNow.time}. تكلم بالمصري المهذب والطبيعي، ورد بإيجاز.`
+          text: `أنت أحمد، موظف خدمة عملاء ومسؤول تشغيل في شركة Top Wash لتنظيف المفروشات في مصر. اليوم: ${egyptNow.day} الموافق ${egyptNow.date} والوقت ${egyptNow.time}.
+أسلوب كلامك:
+- اتكلم مصري عادي وطبيعي جداً كأنك موظف خدمة عملاء حقيقي بيكلم عميل، من غير أي كلمات عامية مصطنعة أو غريبة زي «باه» أو قوالب روبوتية متكررة.
+- عند الشكاوى (مثل أسلوب فني أو تأخير أو نتيجة تنظيف)، لا تقل «ألف سلامة» على أسلوب فني أو موقف غير صحي؛ عبّر عن أسفك واحترامك لتجربة العميل بشكل طبيعي ومباشر وهادئ من غير مبالغة أو دراما.
+- رد على قد كلام العميل ببساطة وود ووضوح، ولا تضغط عليه بكل أسئلة الحجز في رسالة واحدة لو لسه بيسأل أو بيبدأ كلام.
+- لا تستخدم رموز نجوم مزدوجة أو تنسيقات غريبة ولا تذكر أسماء أدوات أو قواعد بيانات أو أنظمة داخلية.
+
+قواعد الاسم ورقم الموبايل في الحجز والشكاوى:
+- ركّز إن العميل يبعت الاسم ثنائي (اسمين على الأقل)، ولو بعت الاسم أحادي (اسم واحد بس) اطلب منه بلطف يبعت الاسم ثنائي ومش هينفع يتسجل أحادي.
+- لو العميل بعت اسم ثنائي وطلع في اسم تاني مسجل زيه (أو الأداة رجّعت duplicate_name_found أو duplicate_two_part_name)، اطلب من العميل يكتب الاسم ثلاثي عشان ميحصلش لخبطة.
+- لو لاحظت إن رقم الموبايل ناقص عن 11 رقم أو مش كامل أو الأداة رجّعت incomplete_or_invalid_phone، وضّح للعميل بلطف يراجع الرقم ويبعته كامل من 11 رقم.
+
+الخدمات والأسعار الحالية:
+${catalogText}
+
+تعليمات تسجيل الشكاوى ومطابقتها بالأوردر السابق:
+- إذا عبّر العميل عن شكوى أو طلب جديد لأول مرة، خذ منه الاسم ورقم الموبايل لو لم يذكرهما، ثم استدعِ submit_customer_interaction مرة واحدة لتسجيلها (وهي تراجع الأوردر السابق للعميل تلقائياً).
+- إذا أرجعت submit_customer_interaction أن service_mismatch_with_last_order يساوي true أو وجود previous_items_summary مختلف عن القطعة التي يشتكي منها العميل (مثلاً العميل يشتكي من مرتبة بينما الأوردر السابق المسجل معه كان سجاد)، وضّح للعميل بلطف وشياكة إن الأوردر المسجل معانا كان (اذكر الخدمة الفعلية من previous_items_summary) وأنه قد يكون تعامل على القطعة الأخرى مع جهة أخرى، مع تأكيد تسجيل ملاحظته للإدارة للمراجعة.
+- إذا أضاف العميل بعد ذلك ملاحظة أو طلب متابعة أو حدد وقت تواصل بخصوص نفس الشكوى، استدعِ append_interaction_note لإلحاق ملاحظة العميل بنفس الشكوى القائمة ولا تستدعِ submit_customer_interaction مرة أخرى.
+- لا تنسخ كلام العميل حرفياً كما هو؛ اكتب subject كعنوان واضح ومباشر، واكتب summary كملخص بسيط ومفهوم، واكتب details بشكل مرتب وواضح ومفهوم للشخص المسؤول في الإدارة.
+- لا تؤكد أن الشكوى أو الملاحظة تم تسجيلها إلا بعد نجاح تنفيذ الأداة فعلياً.
+
+تعليمات التحكم في الحجوزات:
+- أنت مسؤول كامل مثل موظف الحجوزات: إذا طلب العميل تأجيل/تغيير ميعاد أو فترة، أو إلغاء حجز، أو تعليق حجز، يجب أن تستدعي أولاً lookup_customer_bookings لمعرفة الحجز الحالي، ثم تنفذ التعديل الفعلي في قاعدة البيانات عبر update_booking_schedule أو update_booking_status (بحالة cancelled للإلغاء أو pending للتعليق)، ولا تؤكد للعميل أن التعديل أو الإلغاء تم إلا بعد نجاح تنفيذ الأداة فعلياً.`
         }]
       };
 
@@ -438,9 +1092,9 @@
       });
 
       let candidate = data.candidates[0];
-      let modelParts = candidate.content.parts;
+      let modelParts = candidate.content.parts || [];
 
-      while (modelParts && modelParts.some(p => p.functionCall)) {
+      while (modelParts.some(p => p.functionCall)) {
         chatHistory.push({ role: 'model', parts: modelParts });
         const functionResponsesParts = [];
         for (const part of modelParts) {
@@ -458,10 +1112,10 @@
           tools: toolsDeclaration
         });
         candidate = data.candidates[0];
-        modelParts = candidate.content.parts;
+        modelParts = candidate.content.parts || [];
       }
 
-      const finalText = (modelParts || []).map(p => p.text || '').join('\n');
+      const finalText = modelParts.map(p => p.text || '').join('\n').trim();
       chatHistory.push({ role: 'model', parts: [{ text: finalText }] });
       return finalText;
     }
@@ -502,8 +1156,10 @@
 
       requestInProgress = true;
       input.value = '';
+      autoResizeInput(input);
       appendMessageUI('user', text);
       chatHistory.push({ role: 'user', parts: [{ text }] });
+      await logConversation({ speaker: 'customer', event_type: 'message', message: text });
 
       btn.disabled = true;
       btn.innerHTML = `<span class="animate-pulse">يكتب...</span>`;
@@ -511,8 +1167,11 @@
       try {
         const reply = await callGeminiAgent();
         appendMessageUI('model', reply);
+        await logConversation({ speaker: 'assistant', event_type: 'reply', message: reply });
       } catch (err) {
-        appendMessageUI('model', `خطأ من جوجل: ` + err.message);
+        const errMsg = `خطأ من جوجل: ` + err.message;
+        appendMessageUI('model', errMsg);
+        await logConversation({ speaker: 'system', event_type: 'error', message: err.message });
       } finally {
         requestInProgress = false;
         btn.disabled = false;
@@ -523,11 +1182,20 @@
     }
 
     function showWelcomeMessage() {
-      appendMessageUI('model', 'أهلاً بحضرتك يا فندم معاك احمد من Top Wash ✨ حضرتك محتاج تنظف إيه عشان اقدر اساعد حضرتك ؟');
+      appendMessageUI('model', 'أهلاً بحضرتك يا فندم، معاك أحمد من Top Wash ✨ أقدر أساعد حضرتك في إيه النهاردة؟');
     }
 
     function resetChat() {
       chatHistory = [];
+      lastSharedLocationUrl = '';
+      selectedCustomerCoordinates = null;
+      lastSubmittedInteractionId = null;
+      conversationSessionId = createSessionId();
+      const input = document.getElementById('userInput');
+      if (input) {
+        input.value = '';
+        autoResizeInput(input);
+      }
       document.getElementById('chatContainer').innerHTML = '';
       showWelcomeMessage();
     }
