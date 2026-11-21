@@ -31,7 +31,6 @@
     }
   </script>
   <style>
-    /* Theme CSS Variables & Enhanced Light Mode Contrast */
     :root {
       --bg-main: #09090b;
       --bg-card: #121217;
@@ -41,7 +40,8 @@
       --accent-color: #8b5cf6;
       --accent-hover: #7c3aed;
       --input-bg: #09090b;
-      --table-head-bg: rgba(0,0,0,0.2);
+      --table-head-bg: rgba(24, 24, 27, 0.8);
+      --sidebar-bg: #121217;
     }
     body.theme-light {
       --bg-main: #f1f5f9;
@@ -49,10 +49,11 @@
       --border-color: #cbd5e1;
       --text-main: #0f172a;
       --text-muted: #475569;
-      --accent-color: #7c3aed;
-      --accent-hover: #6d28d9;
+      --accent-color: #4338ca;
+      --accent-hover: #3730a3;
       --input-bg: #f8fafc;
       --table-head-bg: #e2e8f0;
+      --sidebar-bg: #ffffff;
     }
     body.theme-dark {
       --bg-main: #09090b;
@@ -63,200 +64,245 @@
       --accent-color: #8b5cf6;
       --accent-hover: #7c3aed;
       --input-bg: #09090b;
-      --table-head-bg: rgba(0,0,0,0.2);
-    }
-    body.theme-gold {
-      --bg-main: #0c0a09;
-      --bg-card: #1c1917;
-      --border-color: #292524;
-      --text-main: #f5f5f4;
-      --text-muted: #a8a29e;
-      --accent-color: #d97706;
-      --accent-hover: #b45309;
-      --input-bg: #0c0a09;
-      --table-head-bg: rgba(0,0,0,0.2);
+      --table-head-bg: rgba(24, 24, 27, 0.8);
+      --sidebar-bg: #121217;
     }
 
-    body { background-color: var(--bg-main); color: var(--text-main); font-family: 'Cairo', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Cairo', sans-serif;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
     .bg-cardDark { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
     .bg-bgDark { background-color: var(--input-bg) !important; border-color: var(--border-color) !important; color: var(--text-main) !important; }
     .border-borderDark { border-color: var(--border-color) !important; }
     .text-zinc-400 { color: var(--text-muted) !important; }
     input::placeholder, textarea::placeholder { color: var(--text-muted) !important; opacity: 0.8; }
-    
-    /* Specific Light Mode Table & Text Fixes for Maximum Clarity */
+
     body.theme-light table thead { background-color: var(--table-head-bg) !important; color: #1e293b !important; font-weight: 700; }
     body.theme-light table th { color: #1e293b !important; }
     body.theme-light td { color: #0f172a !important; }
     body.theme-light .text-zinc-400, body.theme-light p.text-xs { color: #334155 !important; }
     body.theme-light input, body.theme-light select, body.theme-light textarea { color: #0f172a !important; border-color: #94a3b8 !important; }
+
+    /* Sidebar responsive behavior across mobile, tablet, iPad, Mac, and desktop */
+    @media (max-width: 1023px) {
+      #adminSidebar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 270px;
+        z-index: 60;
+        transform: translateX(100%);
+        transition: transform 0.25s ease;
+      }
+      #adminSidebar.open {
+        transform: translateX(0);
+      }
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col theme-dark">
+<body class="min-h-screen flex flex-col theme-dark overflow-x-hidden">
 
-  <!-- Admin Header -->
-  <header class="h-16 border-b border-borderDark bg-cardDark px-6 flex items-center justify-between shrink-0 shadow-sm">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-500">
-        <i data-lucide="shield-check" class="w-6 h-6"></i>
+  <!-- Mobile / Tablet Sidebar Backdrop -->
+  <div id="sidebarBackdrop" onclick="closeSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-xs hidden z-50 lg:hidden"></div>
+
+  <!-- Admin Top Header -->
+  <header class="h-16 border-b border-borderDark bg-cardDark px-3 sm:px-6 flex items-center justify-between shrink-0 shadow-xs sticky top-0 z-40">
+    <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+      <button type="button" onclick="toggleSidebar()" aria-label="فتح القائمة الجانبية" class="lg:hidden w-9 h-9 rounded-xl bg-bgDark border border-borderDark flex items-center justify-center text-current shrink-0">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+      <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-500 shrink-0">
+        <i data-lucide="shield-check" class="w-5 h-5 sm:w-6 sm:h-6"></i>
       </div>
-      <div>
-        <h1 class="font-bold text-base md:text-lg flex items-center gap-2">
-          لوحة تحكم الإدارة وخطوط السير
-          <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-medium">تحديث تلقائي لايف</span>
+      <div class="truncate">
+        <h1 class="font-bold text-sm sm:text-base md:text-lg flex items-center gap-2 truncate">
+          <span class="truncate">لوحة تحكم الإدارة وخطوط السير</span>
+          <span class="hidden sm:inline-block text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-medium shrink-0">تحديث تلقائي لايف</span>
         </h1>
       </div>
     </div>
 
-    <div class="flex items-center gap-3">
-      <!-- Theme Switcher -->
+    <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+      <!-- Theme Switcher: Light & Dark only -->
       <div class="flex items-center bg-bgDark border border-borderDark rounded-xl p-1 gap-1">
-        <button onclick="setTheme('light')" id="themeBtnLight" title="الثيم الفاتح" class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-zinc-400 hover:text-white">☀️ فاتح</button>
-        <button onclick="setTheme('dark')" id="themeBtnDark" title="الثيم الداكن" class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-zinc-400 hover:text-white">🌙 داكن</button>
-        <button onclick="setTheme('gold')" id="themeBtnGold" title="الثيم الذهبي" class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-zinc-400 hover:text-white">👑 ذهبي</button>
+        <button onclick="setTheme('light')" id="themeBtnLight" title="الثيم الفاتح" class="px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-zinc-400">☀️ <span class="hidden md:inline">فاتح</span></button>
+        <button onclick="setTheme('dark')" id="themeBtnDark" title="الثيم الداكن" class="px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-zinc-400">🌙 <span class="hidden md:inline">داكن</span></button>
       </div>
 
-      <button onclick="fetchAllData()" class="px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold flex items-center gap-1.5 transition text-white border border-borderDark">
+      <button onclick="fetchAllData()" class="px-2.5 sm:px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold flex items-center gap-1.5 transition text-white border border-borderDark">
         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-        <span>تحديث الآن</span>
+        <span class="hidden sm:inline">تحديث الآن</span>
       </button>
-      <button onclick="toggleConfigModal()" class="px-3.5 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30 text-xs font-bold flex items-center gap-1.5 transition">
+      <button onclick="toggleConfigModal()" class="px-2.5 sm:px-3.5 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30 text-xs font-bold flex items-center gap-1.5 transition">
         <i data-lucide="key" class="w-4 h-4"></i>
-        <span>إعدادات الربط</span>
+        <span class="hidden md:inline">إعدادات الربط</span>
       </button>
     </div>
   </header>
 
-  <!-- Navigation Tabs -->
-  <div class="border-b border-borderDark bg-cardDark px-6 pt-3 flex gap-8">
-    <button onclick="switchTab('bookings')" id="tab-bookings" class="pb-3 text-sm font-bold border-b-2 border-purple-500 text-purple-500 flex items-center gap-2 transition">
-      <i data-lucide="calendar-check" class="w-4 h-4"></i>
-      جدول الحجوزات واللوكيشن (Live)
-    </button>
-    <button onclick="switchTab('interactions')" id="tab-interactions" class="pb-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-2 transition">
-      <i data-lucide="message-square-warning" class="w-4 h-4"></i> الشكاوى والطلبات
-    </button>
-    <button onclick="switchTab('conversations')" id="tab-conversations" class="pb-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-2 transition">
-      <i data-lucide="messages-square" class="w-4 h-4"></i> سجل المحادثات
-    </button>
-    <button onclick="switchTab('catalog')" id="tab-catalog" class="pb-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-2 transition">
-      <i data-lucide="tag" class="w-4 h-4"></i>
-      قائمة الأسعار والخدمات
-    </button>
-    <button onclick="switchTab('zones')" id="tab-zones" class="pb-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-2 transition">
-      <i data-lucide="map" class="w-4 h-4"></i>
-      تقسيم القطاعات الجغرافية
-    </button>
+  <!-- Workspace Body with Sidebar + Main Content -->
+  <div class="flex-1 flex min-h-0">
+
+    <!-- Sidebar inspired by clean dashboard sidebar (preserving existing tabs only) -->
+    <aside id="adminSidebar" class="w-64 xl:w-72 shrink-0 bg-cardDark border-l border-borderDark flex flex-col justify-between p-4">
+      <div class="space-y-4">
+        <div class="px-3 py-2.5 rounded-xl bg-bgDark border border-borderDark flex items-center justify-between">
+          <span class="text-xs font-extrabold tracking-wide text-purple-500">قائمة الإدارة</span>
+          <button type="button" onclick="closeSidebar()" class="lg:hidden text-zinc-400 hover:text-current text-xs">✕</button>
+        </div>
+
+        <nav class="flex flex-col gap-1.5" aria-label="أقسام لوحة الإدارة">
+          <button onclick="switchTab('bookings')" id="tab-bookings" class="w-full px-3.5 py-3 rounded-xl text-sm font-bold bg-purple-600/15 text-purple-500 border border-purple-500/30 flex items-center gap-2.5 text-right transition">
+            <i data-lucide="calendar-check" class="w-4 h-4 shrink-0"></i>
+            <span>جدول الحجوزات واللوكيشن (Live)</span>
+          </button>
+          <button onclick="switchTab('interactions')" id="tab-interactions" class="w-full px-3.5 py-3 rounded-xl text-sm font-medium text-zinc-400 hover:bg-zinc-500/10 flex items-center gap-2.5 text-right transition">
+            <i data-lucide="message-square-warning" class="w-4 h-4 shrink-0"></i>
+            <span>الشكاوى والطلبات</span>
+          </button>
+          <button onclick="switchTab('conversations')" id="tab-conversations" class="w-full px-3.5 py-3 rounded-xl text-sm font-medium text-zinc-400 hover:bg-zinc-500/10 flex items-center gap-2.5 text-right transition">
+            <i data-lucide="messages-square" class="w-4 h-4 shrink-0"></i>
+            <span>سجل المحادثات</span>
+          </button>
+          <button onclick="switchTab('catalog')" id="tab-catalog" class="w-full px-3.5 py-3 rounded-xl text-sm font-medium text-zinc-400 hover:bg-zinc-500/10 flex items-center gap-2.5 text-right transition">
+            <i data-lucide="tag" class="w-4 h-4 shrink-0"></i>
+            <span>قائمة الأسعار والخدمات</span>
+          </button>
+          <button onclick="switchTab('zones')" id="tab-zones" class="w-full px-3.5 py-3 rounded-xl text-sm font-medium text-zinc-400 hover:bg-zinc-500/10 flex items-center gap-2.5 text-right transition">
+            <i data-lucide="map" class="w-4 h-4 shrink-0"></i>
+            <span>تقسيم القطاعات الجغرافية</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="pt-4 border-t border-borderDark text-[11px] text-zinc-400">
+        Top Wash • متابعة فورية
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-6 min-w-0">
+
+      <!-- TAB 1: Bookings -->
+      <div id="view-bookings" class="space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-xs">
+            <p class="text-xs text-zinc-400">إجمالي الأوردرات المسجلة</p>
+            <h3 id="statTotalBookings" class="text-2xl sm:text-3xl font-extrabold mt-1">0</h3>
+          </div>
+          <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-xs">
+            <p class="text-xs text-zinc-400">إجمالي المبيعات المحجوزة</p>
+            <h3 id="statTotalRevenue" class="text-2xl sm:text-3xl font-extrabold mt-1 text-emerald-400">0 ج.م</h3>
+          </div>
+          <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-xs sm:col-span-2 xl:col-span-1">
+            <p class="text-xs text-zinc-400">حالة الربط مع شات العملاء</p>
+            <h3 class="text-lg sm:text-xl font-extrabold mt-2 text-purple-400 flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+              متصل ويستقبل الحجوزات تلقائياً
+            </h3>
+          </div>
+        </div>
+
+        <div class="bg-cardDark border border-borderDark rounded-2xl overflow-hidden shadow-xs">
+          <div class="p-4 border-b border-borderDark flex items-center justify-between">
+            <h3 class="font-bold text-sm">سجل الحجوزات وخط سير التيم</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-right text-sm min-w-[760px]">
+              <thead class="bg-zinc-900/40 text-zinc-400 text-xs">
+                <tr>
+                  <th class="py-3.5 px-4">العميل ورقم الهاتف</th>
+                  <th class="py-3.5 px-4">المنطقة واللوكيشن الدقيق</th>
+                  <th class="py-3.5 px-4">الموعد والفترة</th>
+                  <th class="py-3.5 px-4">المفروشات المطلوبة</th>
+                  <th class="py-3.5 px-4">الإجمالي</th>
+                  <th class="py-3.5 px-4">الحالة</th>
+                  <th class="py-3.5 px-4">إدارة</th>
+                </tr>
+              </thead>
+              <tbody id="bookingsTableBody" class="divide-y divide-borderDark"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Customer Interactions (Complaints, Job Requests, Suggestions, Requests) -->
+      <div id="view-interactions" class="hidden space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="bg-cardDark border border-borderDark rounded-2xl p-4"><p class="text-xs text-zinc-400">طلبات جديدة</p><h3 id="statNewInteractions" class="text-2xl font-extrabold text-amber-400">0</h3></div>
+          <div class="bg-cardDark border border-borderDark rounded-2xl p-4"><p class="text-xs text-zinc-400">قيد المتابعة</p><h3 id="statOpenInteractions" class="text-2xl font-extrabold text-sky-400">0</h3></div>
+          <div class="bg-cardDark border border-borderDark rounded-2xl p-4"><p class="text-xs text-zinc-400">تم الحل</p><h3 id="statResolvedInteractions" class="text-2xl font-extrabold text-emerald-400">0</h3></div>
+        </div>
+        <div class="bg-cardDark border border-borderDark rounded-2xl p-4 flex flex-col md:flex-row gap-3 shadow-xs">
+          <input id="interactionSearch" oninput="renderInteractions(window.twInteractions || [])" placeholder="بحث بالاسم أو الهاتف أو شكوى أو توظيف أو اقتراح..." class="flex-1 bg-bgDark border border-borderDark rounded-xl px-3 py-2 text-xs focus:outline-none" />
+          <select id="interactionStatusFilter" onchange="renderInteractions(window.twInteractions || [])" class="bg-bgDark border border-borderDark rounded-xl px-3 py-2 text-xs focus:outline-none">
+            <option value="all">كل الحالات</option>
+            <option value="new">جديدة</option>
+            <option value="reviewing">قيد المراجعة</option>
+            <option value="contacting">جاري التواصل</option>
+            <option value="technical_team">محولة للفريق الفني</option>
+            <option value="resolved">تم الحل</option>
+            <option value="closed">مغلقة</option>
+          </select>
+        </div>
+        <div id="interactionsContainer" class="space-y-3"></div>
+      </div>
+
+      <!-- TAB: Conversation Logs -->
+      <div id="view-conversations" class="hidden space-y-4">
+        <div class="bg-cardDark border border-borderDark rounded-2xl p-4 flex flex-col md:flex-row gap-3 shadow-xs">
+          <input id="conversationSearch" oninput="renderConversations(window.twConversations || [])" placeholder="بحث في رسائل العملاء والبوت..." class="flex-1 bg-bgDark border border-borderDark rounded-xl px-3 py-2 text-xs focus:outline-none" />
+          <span class="text-xs text-zinc-400 self-center">سجل رسائل العميل وردود البوت وعمليات الأدوات</span>
+          <button type="button" onclick="refreshConversations()" class="bg-zinc-800 hover:bg-zinc-700 text-white border border-borderDark rounded-xl px-4 py-2 text-xs font-bold transition shrink-0">تحديث المحادثات</button>
+        </div>
+        <div id="conversationsContainer" class="space-y-3"></div>
+      </div>
+
+      <!-- TAB 2: Catalog -->
+      <div id="view-catalog" class="hidden space-y-6">
+        <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-xs">
+          <h3 class="font-bold text-sm mb-3 text-purple-400">إضافة خدمة جديدة (تظهر وتُفهم تلقائياً للبوت في صفحة العميل)</h3>
+          <form onsubmit="addServiceItem(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <input id="newItemName" type="text" placeholder="اسم القطعة بالعربي (مثال: كراسي سفره أو كنبة)" required class="bg-bgDark border border-borderDark rounded-xl px-3.5 py-2.5 text-xs focus:outline-none" />
+            <input id="newItemPrice" type="number" min="0" step="any" placeholder="السعر بالجنيه (مثال: 750)" required class="bg-bgDark border border-borderDark rounded-xl px-3.5 py-2.5 text-xs focus:outline-none" />
+            <input id="newItemKey" type="text" placeholder="كود اختياري (يُنشأ تلقائياً لو تُرك فارغاً)" class="bg-bgDark border border-borderDark rounded-xl px-3.5 py-2.5 text-xs focus:outline-none" />
+            <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-4 py-2.5 text-xs font-bold transition shadow-xs">
+              + إضافة للسيستم
+            </button>
+          </form>
+        </div>
+
+        <div class="bg-cardDark border border-borderDark rounded-2xl overflow-hidden shadow-xs">
+          <div class="overflow-x-auto">
+            <table class="w-full text-right text-sm min-w-[540px]">
+              <thead class="bg-zinc-900/40 text-zinc-400 text-xs">
+                <tr>
+                  <th class="py-3.5 px-4">كود البرمجة</th>
+                  <th class="py-3.5 px-4">اسم الخدمة</th>
+                  <th class="py-3.5 px-4">السعر الحالي</th>
+                  <th class="py-3.5 px-4">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="catalogTableBody" class="divide-y divide-borderDark"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: Zones -->
+      <div id="view-zones" class="hidden space-y-4">
+        <div id="zonesContainer" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      </div>
+
+    </main>
   </div>
 
-  <!-- Main Content -->
-  <main class="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6">
-    
-    <!-- TAB 1: Bookings -->
-    <div id="view-bookings" class="space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-sm">
-          <p class="text-xs text-zinc-400">إجمالي الأوردرات المسجلة</p>
-          <h3 id="statTotalBookings" class="text-3xl font-extrabold mt-1">0</h3>
-        </div>
-        <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-sm">
-          <p class="text-xs text-zinc-400">إجمالي المبيعات المحجوزة</p>
-          <h3 id="statTotalRevenue" class="text-3xl font-extrabold mt-1 text-emerald-400">0 ج.م</h3>
-        </div>
-        <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-sm">
-          <p class="text-xs text-zinc-400">حالة الربط مع شات العملاء</p>
-          <h3 class="text-xl font-extrabold mt-2 text-purple-400 flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-            متصل ويستقبل الحجوزات تلقائياً
-          </h3>
-        </div>
-      </div>
-
-      <div class="bg-cardDark border border-borderDark rounded-2xl overflow-hidden shadow-sm">
-        <div class="p-4 border-b border-borderDark flex items-center justify-between">
-          <h3 class="font-bold text-sm">سجل الحجوزات وخط سير التيم</h3>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-right text-sm">
-            <thead class="bg-zinc-900/40 text-zinc-400 text-xs">
-              <tr>
-                <th class="py-3.5 px-4">العميل ورقم الهاتف</th>
-                <th class="py-3.5 px-4">المنطقة واللوكيشن الدقيق</th>
-                <th class="py-3.5 px-4">الموعد والفترة</th>
-                <th class="py-3.5 px-4">المفروشات المطلوبة</th>
-                <th class="py-3.5 px-4">الإجمالي</th>
-                <th class="py-3.5 px-4">الحالة</th>
-                <th class="py-3.5 px-4">إدارة</th>
-              </tr>
-            </thead>
-            <tbody id="bookingsTableBody" class="divide-y divide-borderDark"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: Customer Interactions -->
-    <div id="view-interactions" class="hidden space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div class="bg-cardDark border border-borderDark rounded-2xl p-4"><p class="text-xs text-zinc-400">طلبات جديدة</p><h3 id="statNewInteractions" class="text-2xl font-extrabold text-amber-400">0</h3></div>
-        <div class="bg-cardDark border border-borderDark rounded-2xl p-4"><p class="text-xs text-zinc-400">قيد المتابعة</p><h3 id="statOpenInteractions" class="text-2xl font-extrabold text-sky-400">0</h3></div>
-        <div class="bg-cardDark border border-borderDark rounded-2xl p-4"><p class="text-xs text-zinc-400">تم الحل</p><h3 id="statResolvedInteractions" class="text-2xl font-extrabold text-emerald-400">0</h3></div>
-      </div>
-      <div class="bg-cardDark border border-borderDark rounded-2xl p-4 flex flex-col md:flex-row gap-3 shadow-sm">
-        <input id="interactionSearch" oninput="renderInteractions(window.twInteractions || [])" placeholder="بحث بالاسم أو الهاتف أو التفاصيل..." class="flex-1 bg-bgDark border border-borderDark rounded-xl px-3 py-2 text-xs focus:outline-none" />
-        <select id="interactionStatusFilter" onchange="renderInteractions(window.twInteractions || [])" class="bg-bgDark border border-borderDark rounded-xl px-3 py-2 text-xs focus:outline-none"><option value="all">كل الحالات</option><option value="new">جديدة</option><option value="reviewing">قيد المراجعة</option><option value="contacting">جاري التواصل</option><option value="technical_team">محولة للفريق الفني</option><option value="resolved">تم الحل</option><option value="closed">مغلقة</option></select>
-      </div>
-      <div id="interactionsContainer" class="space-y-3"></div>
-    </div>
-
-    <!-- TAB: Conversation Logs -->
-    <div id="view-conversations" class="hidden space-y-4">
-      <div class="bg-cardDark border border-borderDark rounded-2xl p-4 flex flex-col md:flex-row gap-3 shadow-sm">
-        <input id="conversationSearch" oninput="renderConversations(window.twConversations || [])" placeholder="بحث في رسائل العملاء والبوت..." class="flex-1 bg-bgDark border border-borderDark rounded-xl px-3 py-2 text-xs focus:outline-none" />
-        <span class="text-xs text-zinc-400 self-center">سجل رسائل العميل وردود البوت وعمليات الأدوات</span>
-        <button type="button" onclick="refreshConversations()" class="bg-zinc-800 hover:bg-zinc-700 text-white border border-borderDark rounded-xl px-4 py-2 text-xs font-bold transition">تحديث المحادثات</button>
-      </div>
-      <div id="conversationsContainer" class="space-y-3"></div>
-    </div>
-
-    <!-- TAB 2: Catalog -->
-    <div id="view-catalog" class="hidden space-y-6">
-      <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-sm">
-        <h3 class="font-bold text-sm mb-3 text-purple-400">إضافة خدمة جديدة (تظهر فوراً للبوت في صفحة العميل)</h3>
-        <form onsubmit="addServiceItem(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <input id="newItemKey" type="text" placeholder="كود بالإنجليزي (مثال: salon_set)" required class="bg-bgDark border border-borderDark rounded-xl px-3.5 py-2.5 text-xs focus:outline-none" />
-          <input id="newItemName" type="text" placeholder="اسم القطعة بالعربي (مثال: طقم صالون)" required class="bg-bgDark border border-borderDark rounded-xl px-3.5 py-2.5 text-xs focus:outline-none" />
-          <input id="newItemPrice" type="number" placeholder="السعر بالجنيه (مثال: 750)" required class="bg-bgDark border border-borderDark rounded-xl px-3.5 py-2.5 text-xs focus:outline-none" />
-          <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-4 py-2.5 text-xs font-bold transition shadow-sm">
-            + إضافة للسيستم
-          </button>
-        </form>
-      </div>
-
-      <div class="bg-cardDark border border-borderDark rounded-2xl overflow-hidden shadow-sm">
-        <table class="w-full text-right text-sm">
-          <thead class="bg-zinc-900/40 text-zinc-400 text-xs">
-            <tr>
-              <th class="py-3.5 px-4">كود البرمجة</th>
-              <th class="py-3.5 px-4">اسم الخدمة</th>
-              <th class="py-3.5 px-4">السعر الحالي</th>
-              <th class="py-3.5 px-4">الإجراءات</th>
-            </tr>
-          </thead>
-          <tbody id="catalogTableBody" class="divide-y divide-borderDark"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- TAB 3: Zones -->
-    <div id="view-zones" class="hidden space-y-4">
-      <div id="zonesContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-    </div>
-
-  </main>
-
   <!-- In-app action modal -->
-  <div id="appActionModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center z-[70] p-4" onclick="if(event.target===this)closeAppModal()">
+  <div id="appActionModal" class="fixed inset-0 bg-black/75 backdrop-blur-xs hidden items-center justify-center z-[70] p-4" onclick="if(event.target===this)closeAppModal()">
     <div class="bg-cardDark border border-borderDark rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden">
       <div class="p-5 border-b border-borderDark flex items-center justify-between gap-3">
         <div><h3 id="appModalTitle" class="font-extrabold text-base"></h3><p id="appModalDescription" class="text-xs text-zinc-400 mt-1"></p></div>
@@ -268,8 +314,8 @@
   </div>
   <div id="appToast" class="fixed bottom-5 left-5 z-[90] hidden max-w-sm rounded-xl border px-4 py-3 text-sm shadow-xl"></div>
 
-  <!-- API Keys Modal (في لوحة الإدارة فقط) -->
-  <div id="configModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+  <!-- API Keys Modal -->
+  <div id="configModal" class="fixed inset-0 bg-black/75 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
     <div class="bg-cardDark border border-borderDark rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between">
         <h3 class="font-bold text-base">إعدادات الربط (Supabase & Gemini API)</h3>
@@ -298,19 +344,42 @@
   </div>
 
   <script>
-    /* Theme Management */
+    let activeAdminTab = 'bookings';
+    const openSessionIds = new Set();
+
+    function toggleSidebar() {
+      const sb = document.getElementById('adminSidebar');
+      const bd = document.getElementById('sidebarBackdrop');
+      sb.classList.toggle('open');
+      bd.classList.toggle('hidden');
+    }
+
+    function closeSidebar() {
+      const sb = document.getElementById('adminSidebar');
+      const bd = document.getElementById('sidebarBackdrop');
+      sb.classList.remove('open');
+      bd.classList.add('hidden');
+    }
+
+    /* Theme Management: Light & Dark only */
     function setTheme(theme) {
+      const validTheme = theme === 'light' ? 'light' : 'dark';
       document.body.className = document.body.className.replace(/theme-(light|dark|gold)/g, '').trim();
-      document.body.classList.add(`theme-${theme}`);
-      localStorage.setItem('admin_theme', theme);
-      
-      ['light', 'dark', 'gold'].forEach(t => {
+      document.body.classList.add(`theme-${validTheme}`);
+      if (validTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      localStorage.setItem('admin_theme', validTheme);
+
+      ['light', 'dark'].forEach(t => {
         const btn = document.getElementById(`themeBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
         if (btn) {
-          if (t === theme) {
-            btn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 bg-purple-600 text-white shadow-sm';
+          if (t === validTheme) {
+            btn.className = 'px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 bg-purple-600 text-white shadow-2xs';
           } else {
-            btn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-zinc-400 hover:text-white';
+            btn.className = 'px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-zinc-400 hover:text-current';
           }
         }
       });
@@ -327,7 +396,23 @@
 
     let supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function fetchAllData() {
+    function isUserInteractingWithFormOrInput() {
+      const active = document.activeElement;
+      if (!active) return false;
+      const tag = active.tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+      const modal = document.getElementById('appActionModal');
+      if (modal && modal.classList.contains('flex')) return true;
+      const cfgModal = document.getElementById('configModal');
+      if (cfgModal && cfgModal.classList.contains('flex')) return true;
+      return false;
+    }
+
+    async function fetchAllData(isBackgroundPoll = false) {
+      if (isBackgroundPoll && isUserInteractingWithFormOrInput()) {
+        return;
+      }
+
       const { data: bookings } = await supabaseClient.from('bookings').select('*').order('created_at', { ascending: false });
       renderBookings(bookings || []);
 
@@ -359,7 +444,10 @@
 
       tbody.innerHTML = bookings.map(b => {
         const legacyMatch = String(b.area || '').match(/https?:\/\/[^\s]+/i);
-        const coordinateUrl = (b.latitude !== null && b.latitude !== undefined && b.longitude !== null && b.longitude !== undefined && Number.isFinite(Number(b.latitude)) && Number.isFinite(Number(b.longitude))) ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${b.latitude},${b.longitude}`)}` : null;
+        const hasCoords = b.latitude !== null && b.latitude !== undefined && b.longitude !== null && b.longitude !== undefined && Number.isFinite(Number(b.latitude)) && Number.isFinite(Number(b.longitude));
+        const coordinateUrl = hasCoords
+          ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${Number(b.latitude)},${Number(b.longitude)}`)}`
+          : null;
         const mapUrl = coordinateUrl || b.maps_url || (legacyMatch ? legacyMatch[0].replace(/[),]+$/, '') : null);
         const cleanSummary = b.items_summary || '';
         const mapBtn = mapUrl
@@ -369,19 +457,19 @@
         return `
           <tr class="hover:bg-zinc-500/10 transition">
             <td class="py-3.5 px-4">
-              <div class="font-bold">${b.client_name}</div>
-              <div class="text-xs text-zinc-400 font-mono">${b.client_phone}</div>
+              <div class="font-bold">${escapeHtml(b.client_name)}</div>
+              <div class="text-xs text-zinc-400 font-mono">${escapeHtml(b.client_phone)}</div>
             </td>
             <td class="py-3.5 px-4">
-              <span class="px-2.5 py-1 rounded-full text-xs bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 font-bold">${b.area}</span>
+              <span class="px-2.5 py-1 rounded-full text-xs bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 font-bold">${escapeHtml(b.area)}</span>
               <div class="text-xs text-zinc-400 mt-1">${escapeHtml(b.detailed_address || '')}</div><div>${mapBtn}</div>
             </td>
             <td class="py-3.5 px-4">
-              <div class="font-bold">${b.booking_date}</div>
-              <div class="text-xs text-amber-500 dark:text-amber-400">${b.time_slot}</div>
+              <div class="font-bold">${escapeHtml(b.booking_date)}</div>
+              <div class="text-xs text-amber-500 dark:text-amber-400">${escapeHtml(b.time_slot)}</div>
             </td>
-            <td class="py-3.5 px-4 text-xs">${cleanSummary}</td>
-            <td class="py-3.5 px-4 font-extrabold text-emerald-600 dark:text-emerald-400">${b.total_price} ج.م</td>
+            <td class="py-3.5 px-4 text-xs">${escapeHtml(cleanSummary)}</td>
+            <td class="py-3.5 px-4 font-extrabold text-emerald-600 dark:text-emerald-400">${escapeHtml(b.total_price)} ج.م</td>
             <td class="py-3.5 px-4">
               <select onchange="updateBookingStatus('${b.id}',this.value)" class="bg-bgDark border border-borderDark rounded-lg px-2 py-1.5 text-xs focus:outline-none">
                 <option value="confirmed" ${b.status==='confirmed'?'selected':''}>مؤكد</option>
@@ -467,7 +555,14 @@
     }
 
     const interactionStatusLabels = {new:'جديدة', reviewing:'قيد المراجعة', contacting:'جاري التواصل', technical_team:'محولة للفريق الفني', resolved:'تم الحل', closed:'مغلقة'};
-    const categoryLabels = {cleaning_complaint:'شكوى تنظيف', technician_complaint:'شكوى فني', response_complaint:'مشكلة في الرد', reschedule_request:'طلب تعديل موعد', callback_request:'طلب معاودة اتصال', extra_request:'طلب إضافي', general_note:'ملاحظة عامة', other:'أخرى'};
+    const categoryLabels = {cleaning_complaint:'شكوى تنظيف', technician_complaint:'شكوى فني', response_complaint:'مشكلة في الرد', reschedule_request:'طلب تعديل موعد', callback_request:'طلب معاودة اتصال', extra_request:'طلب / توظيف / اقتراح', general_note:'ملاحظة / اقتراح', other:'أخرى'};
+
+    function detectInteractionTypeLabel(item) {
+      const text = `${item.subject || ''} ${item.details || ''}`;
+      if (/توظيف|وظيف|شغل|عمل|cv|سيرة ذاتية/i.test(text)) return 'طلب توظيف';
+      if (/اقتراح|مقترح|فكره|فكرة/i.test(text)) return 'اقتراح';
+      return categoryLabels[item.category] || item.category || 'طلب / شكوى';
+    }
 
     function renderInteractions(items) {
       const q = (document.getElementById('interactionSearch')?.value || '').toLowerCase();
@@ -478,8 +573,8 @@
       const filtered = items.filter(x => (filter==='all'||x.status===filter) && [x.customer_name,x.customer_phone,x.subject,x.details,x.admin_notes].join(' ').toLowerCase().includes(q));
       const box = document.getElementById('interactionsContainer');
       if (!filtered.length) { box.innerHTML='<div class="bg-cardDark border border-borderDark rounded-2xl p-8 text-center text-zinc-500 text-sm">لا توجد شكاوى أو طلبات مطابقة.</div>'; return; }
-      box.innerHTML = filtered.map(x => `<article class="bg-cardDark border border-borderDark rounded-2xl p-4 space-y-3 shadow-sm">
-        <div class="flex flex-col md:flex-row md:items-start justify-between gap-2"><div><div class="flex flex-wrap gap-2 items-center"><strong class="text-sm">${escapeHtml(x.subject)}</strong><span class="text-[11px] rounded-full px-2 py-1 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">${escapeHtml(categoryLabels[x.category]||x.category||'أخرى')}</span><span class="text-[11px] rounded-full px-2 py-1 ${x.priority==='urgent'?'bg-rose-500/15 text-rose-600 dark:text-rose-300':x.priority==='high'?'bg-amber-500/15 text-amber-600 dark:text-amber-300':'bg-zinc-500/20 text-zinc-700 dark:text-zinc-300'}">أولوية ${escapeHtml(x.priority||'normal')}</span></div><p class="text-xs text-zinc-400 mt-2">${escapeHtml(x.customer_name||'بدون اسم')} · ${escapeHtml(x.customer_phone||'بدون رقم')} · ${x.created_at?new Date(x.created_at).toLocaleString('ar-EG'):''}</p></div>
+      box.innerHTML = filtered.map(x => `<article class="bg-cardDark border border-borderDark rounded-2xl p-4 space-y-3 shadow-xs">
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-2"><div><div class="flex flex-wrap gap-2 items-center"><strong class="text-sm">${escapeHtml(x.subject)}</strong><span class="text-[11px] rounded-full px-2.5 py-1 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 font-bold">${escapeHtml(detectInteractionTypeLabel(x))}</span><span class="text-[11px] rounded-full px-2 py-1 ${x.priority==='urgent'?'bg-rose-500/15 text-rose-600 dark:text-rose-300':x.priority==='high'?'bg-amber-500/15 text-amber-600 dark:text-amber-300':'bg-zinc-500/20 text-zinc-700 dark:text-zinc-300'}">أولوية ${escapeHtml(x.priority||'normal')}</span></div><p class="text-xs text-zinc-400 mt-2">${escapeHtml(x.customer_name||'بدون اسم')} · ${escapeHtml(x.customer_phone||'بدون رقم')} · ${x.created_at?new Date(x.created_at).toLocaleString('ar-EG'):''}</p></div>
         <select onchange="updateInteractionStatus('${x.id}',this.value)" class="bg-bgDark border border-borderDark rounded-lg px-3 py-2 text-xs focus:outline-none">${Object.entries(interactionStatusLabels).map(([k,v])=>`<option value="${k}" ${x.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
         <p class="text-sm leading-7 whitespace-pre-wrap">${escapeHtml(x.details)}</p>
         <div class="flex flex-wrap justify-end gap-4"><button onclick="addInteractionNote('${x.id}')" class="text-xs text-purple-600 dark:text-purple-400 hover:underline">إضافة ملاحظة إدارية</button><button onclick="deleteInteraction('${x.id}')" class="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-300 hover:underline">حذف الشكوى</button></div>
@@ -559,6 +654,7 @@
             showToast('تعذر حذف المحادثة: ' + error.message, 'error');
             return false;
           }
+          openSessionIds.delete(sessionId);
           closeAppModal();
           window.twConversations = (window.twConversations || []).filter(r => (r.session_id || '__no_session__') !== sessionId);
           renderConversations(window.twConversations);
@@ -576,12 +672,22 @@
       const box=document.getElementById('conversationsContainer');
       const sessions=Object.entries(groups);
       if(!sessions.length){box.innerHTML='<div class="bg-cardDark border border-borderDark rounded-2xl p-8 text-center text-zinc-500 text-sm">لا توجد محادثات مسجلة بعد.</div>';return;}
+
       box.innerHTML=sessions.map(([id,logs])=>{
         const encodedId=encodeURIComponent(id);
         const sessionTitle=id==='__no_session__'?'بدون رقم جلسة':id.slice(0,13);
         const firstDate=logs[logs.length-1]?.created_at?new Date(logs[logs.length-1].created_at).toLocaleString('ar-EG'):'';
-        return `<details class="bg-cardDark border border-borderDark rounded-2xl overflow-hidden shadow-sm"><summary class="cursor-pointer p-4 flex flex-wrap justify-between items-center gap-2"><span class="font-bold text-sm">محادثة ${escapeHtml(sessionTitle)}</span><span class="text-xs text-zinc-400">${logs.length} سجل · ${firstDate}</span></summary><div class="border-t border-borderDark p-4 space-y-3"><div class="flex justify-end"><button type="button" onclick="deleteConversationSession('${encodedId}')" class="text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-500/30 px-3 py-2 rounded-lg">حذف المحادثة</button></div>${logs.slice().reverse().map(r=>`<div class="rounded-xl p-3 ${r.speaker==='customer'?'bg-indigo-500/10':r.speaker==='assistant'?'bg-zinc-500/10':'bg-amber-500/10'}"><div class="flex justify-between gap-2 text-[10px] text-zinc-400 mb-1"><b>${r.speaker==='customer'?'العميل':r.speaker==='assistant'?'أحمد / AI':r.speaker==='tool'?'تنفيذ أداة':'النظام'}</b><span>${r.created_at?new Date(r.created_at).toLocaleTimeString('ar-EG'):''} ${r.tool_name?'· '+escapeHtml(r.tool_name):''}</span></div><p class="text-xs whitespace-pre-wrap break-words leading-6">${escapeHtml(r.message)}</p></div>`).join('')}</div></details>`;
+        const isOpen = openSessionIds.has(id) || Boolean(q);
+        return `<details data-session-id="${escapeHtml(encodedId)}" ${isOpen ? 'open' : ''} class="bg-cardDark border border-borderDark rounded-2xl overflow-hidden shadow-xs"><summary class="cursor-pointer p-4 flex flex-wrap justify-between items-center gap-2 select-none"><span class="font-bold text-sm">محادثة ${escapeHtml(sessionTitle)}</span><span class="text-xs text-zinc-400">${logs.length} سجل · ${firstDate}</span></summary><div class="border-t border-borderDark p-4 space-y-3"><div class="flex justify-end"><button type="button" onclick="deleteConversationSession('${encodedId}')" class="text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-500/30 px-3 py-2 rounded-lg">حذف المحادثة</button></div>${logs.slice().reverse().map(r=>`<div class="rounded-xl p-3 ${r.speaker==='customer'?'bg-indigo-500/10':r.speaker==='assistant'?'bg-zinc-500/10':'bg-amber-500/10'}"><div class="flex justify-between gap-2 text-[10px] text-zinc-400 mb-1"><b>${r.speaker==='customer'?'العميل':r.speaker==='assistant'?'أحمد / AI':r.speaker==='tool'?'تنفيذ أداة':'النظام'}</b><span>${r.created_at?new Date(r.created_at).toLocaleTimeString('ar-EG'):''} ${r.tool_name?'· '+escapeHtml(r.tool_name):''}</span></div><p class="text-xs whitespace-pre-wrap break-words leading-6">${escapeHtml(r.message)}</p></div>`).join('')}</div></details>`;
       }).join('');
+
+      box.querySelectorAll('details[data-session-id]').forEach(el => {
+        el.addEventListener('toggle', () => {
+          const decoded = decodeURIComponent(el.getAttribute('data-session-id') || '');
+          if (el.open) openSessionIds.add(decoded);
+          else openSessionIds.delete(decoded);
+        });
+      });
     }
 
     function renderCatalog(catalog) {
@@ -603,10 +709,10 @@
     function renderZones(zones) {
       const box = document.getElementById('zonesContainer');
       box.innerHTML = zones.map(z => `
-        <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-sm">
-          <h4 class="font-bold text-purple-600 dark:text-purple-400 text-sm">${z.zone_name}</h4>
+        <div class="bg-cardDark border border-borderDark rounded-2xl p-5 shadow-xs">
+          <h4 class="font-bold text-purple-600 dark:text-purple-400 text-sm">${escapeHtml(z.zone_name)}</h4>
           <div class="flex flex-wrap gap-1.5 mt-3">
-            ${(z.covered_areas || []).map(a => `<span class="px-2.5 py-1 rounded-lg bg-zinc-500/10 border border-borderDark text-xs">${a}</span>`).join('')}
+            ${(z.covered_areas || []).map(a => `<span class="px-2.5 py-1 rounded-lg bg-zinc-500/10 border border-borderDark text-xs">${escapeHtml(a)}</span>`).join('')}
           </div>
         </div>
       `).join('');
@@ -635,15 +741,26 @@
       },'حذف الخدمة');
     }
 
+    function generateItemKeyFromArabic(nameAr) {
+      const slug = String(nameAr || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s]+/gu, ' ')
+        .trim()
+        .replace(/\s+/g, '_');
+      return slug || `service_${Date.now()}`;
+    }
+
     async function addServiceItem(e) {
       e.preventDefault();
-      const item_key = document.getElementById('newItemKey').value.trim();
       const item_name_ar = document.getElementById('newItemName').value.trim();
       const price = Number(document.getElementById('newItemPrice').value);
-      if(!item_key||!item_name_ar||!Number.isFinite(price)||price<0){showToast('راجع كود الخدمة والاسم والسعر.','error');return;}
+      const rawKey = document.getElementById('newItemKey').value.trim();
+      const item_key = rawKey || generateItemKeyFromArabic(item_name_ar);
+      if(!item_name_ar||!Number.isFinite(price)||price<0){showToast('راجع اسم الخدمة والسعر.','error');return;}
       const {error}=await supabaseClient.from('services_catalog').insert([{ item_key, item_name_ar, price }]);
       if(error){showToast('تعذر إضافة الخدمة: '+error.message,'error');return;}
-      e.target.reset();showToast('تمت إضافة الخدمة بنجاح','success');fetchAllData();
+      e.target.reset();showToast('تمت إضافة الخدمة وتفعيلها للبوت بنجاح','success');fetchAllData();
     }
 
     let appModalSubmit = null;
@@ -680,12 +797,14 @@
     document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAppModal();});
 
     function switchTab(tab) {
+      activeAdminTab = tab;
       ['bookings', 'interactions', 'conversations', 'catalog', 'zones'].forEach(t => {
         document.getElementById(`view-${t}`).classList.add('hidden');
-        document.getElementById(`tab-${t}`).className = 'pb-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-2 transition';
+        document.getElementById(`tab-${t}`).className = 'w-full px-3.5 py-3 rounded-xl text-sm font-medium text-zinc-400 hover:bg-zinc-500/10 flex items-center gap-2.5 text-right transition';
       });
       document.getElementById(`view-${tab}`).classList.remove('hidden');
-      document.getElementById(`tab-${tab}`).className = 'pb-3 text-sm font-bold border-b-2 border-purple-500 text-purple-500 flex items-center gap-2 transition';
+      document.getElementById(`tab-${tab}`).className = 'w-full px-3.5 py-3 rounded-xl text-sm font-bold bg-purple-600/15 text-purple-500 border border-purple-500/30 flex items-center gap-2.5 text-right transition';
+      closeSidebar();
     }
 
     function toggleConfigModal() {
@@ -713,8 +832,8 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
-      fetchAllData();
-      setInterval(fetchAllData, 5000);
+      fetchAllData(false);
+      setInterval(() => fetchAllData(true), 5000);
     });
   </script>
 </body>
