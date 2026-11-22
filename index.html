@@ -1,1378 +1,607 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>المساعد الذكي لحجز تنظيف المفروشات</title>
-  <!-- Tailwind CSS -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f7fc" id="metaThemeColor">
+  <title>Ahmed Fathy — Web Designer & Digital Solutions Developer</title>
+  <meta name="description" content="Ahmed Fathy designs and develops premium websites, e-commerce experiences, and custom digital solutions for ambitious businesses.">
+  <meta property="og:title" content="Ahmed Fathy — Digital Experiences & Web Solutions">
+  <meta property="og:description" content="Turning business ideas into purposeful digital experiences. Explore selected work and start a project.">
+  <meta property="og:type" content="website">
+  <meta name="google-site-verification" content="iRYHzkHRmKSeDDStNdUHjgyxjKblClGBh9sfkfgZu70" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Cairo -->
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Supabase JS SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Interactive map (Leaflet + OpenStreetMap) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-
   <script>
     tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Cairo', 'sans-serif'] }
-        }
-      }
-    }
+      darkMode: 'class',
+      theme: { extend: {
+        colors: {
+          ink: '#080b12', panel: '#0e1420', panel2: '#121b2a',
+          line: 'rgba(157,177,208,.14)', muted: '#9aa8bd',
+          blue: '#6d8dff', cyan: '#69d9e8'
+        },
+        fontFamily: { sans: ['Inter','Manrope','sans-serif'] }
+      }}
+    };
   </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    body {
-      font-family: 'Cairo', sans-serif;
-      background: linear-gradient(135deg, #f3f4f6 0%, #ede9fe 55%, #e0e7ff 100%);
+    :root {
+      --bg: #f5f8ff;
+      --panel: #ffffff;
+      --panel-alt: #eef3fb;
+      --line: rgba(99, 102, 241, 0.16);
+      --muted: #475569;
+      --text: #0b1120;
+      --blue: #2563eb;
+      --cyan: #06b6d4;
+      --accent-purple: #7c3aed;
+      --card-bg: #ffffff;
+      --nav-bg: rgba(245, 248, 255, 0.84);
+      --logo-bg: linear-gradient(135deg, #0f172a, #1e293b);
+      --logo-text: #ffffff;
     }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
-    #chatContainer .message-text { overflow-wrap: anywhere; word-break: normal; white-space: pre-wrap; }
-    @keyframes floatSoft {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-2px); }
+    .dark {
+      --bg: #060913;
+      --panel: #0c1220;
+      --panel-alt: #11192c;
+      --line: rgba(129, 140, 248, 0.16);
+      --muted: #9aa8c7;
+      --text: #f8fafc;
+      --blue: #6d8dff;
+      --cyan: #38bdf8;
+      --accent-purple: #a78bfa;
+      --card-bg: linear-gradient(145deg, rgba(19, 28, 43, 0.92), rgba(11, 16, 26, 0.96));
+      --nav-bg: rgba(6, 9, 19, 0.78);
+      --logo-bg: linear-gradient(135deg, #ffffff, #e2e8f0);
+      --logo-text: #060913;
     }
-    .float-soft { animation: floatSoft 3s ease-in-out infinite; }
+    *{box-sizing:border-box}
+    html{scroll-padding-top:100px}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Manrope,sans-serif;overflow-x:hidden;transition:background-color .35s ease, color .35s ease}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse at 50% 15%, black 25%, transparent 78%)}
+    ::selection{background:rgba(99,102,241,.28);color:var(--text)}
+    a{color:inherit;text-decoration:none}
+    
+    .container{max-width:1100px;width:100%;margin-inline:auto;padding-inline:24px;}
+    @media(min-width: 640px){.container{padding-inline:36px;}}
+    @media(min-width: 1280px){.container{padding-inline:40px;}}
+
+    .nav-shell{background:var(--nav-bg);backdrop-filter:blur(22px) saturate(150%);border-bottom:1px solid var(--line);box-shadow:0 8px 32px rgba(2,6,23,.05);transition:background .3s, border-color .3s}
+    .dark .nav-shell{box-shadow:0 10px 36px rgba(0,0,0,.35)}
+    .nav-link{position:relative;color:var(--muted);transition:.25s}.nav-link:hover,.nav-link.active{color:var(--text);font-weight:700;}
+    .nav-link.active:after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;border-radius:999px;background:linear-gradient(90deg,var(--blue),var(--cyan))}
+
+    .eyebrow{display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(99,102,241,0.28);background:linear-gradient(90deg,rgba(37,99,235,0.08),rgba(6,182,212,0.08));padding:9px 14px;border-radius:999px;color:var(--blue);font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;box-shadow:0 6px 20px rgba(37,99,235,.08)}
+    .eyebrow-dot{height:7px;width:7px;border-radius:50%;background:#10b981;box-shadow:0 0 0 6px rgba(16,185,129,.18)}
+
+    .gradient-text{background:linear-gradient(105deg,var(--text) 5%,var(--blue) 48%,var(--accent-purple) 78%,var(--cyan) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .hero-title{font-size:clamp(2.8rem,6.5vw,5.5rem);line-height:1.02;letter-spacing:-.075em;font-weight:800}
+    .hero-orb{position:absolute;border-radius:50%;filter:blur(95px);pointer-events:none;opacity:.22}
+    .dark .hero-orb{opacity:.34}
+
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;padding:14px 20px;font-size:13px;font-weight:700;transition:transform .25s cubic-bezier(.22,1,.36,1),box-shadow .25s,border-color .25s,background .25s}
+    .btn:hover{transform:translateY(-3px)}
+    .btn-primary{background:linear-gradient(115deg,#2563eb 0%,#4f46e5 55%,#0891b2 100%);box-shadow:0 14px 36px rgba(37,99,235,.28),inset 0 1px 0 rgba(255,255,255,.25);color:#fff}
+    .dark .btn-primary{background:linear-gradient(115deg,#6284ff 0%,#7c5cff 55%,#22d3ee 100%);box-shadow:0 14px 40px rgba(99,102,241,.32),inset 0 1px 0 rgba(255,255,255,.3)}
+    .btn-primary:hover{box-shadow:0 18px 44px rgba(37,99,235,.38)}
+    .btn-secondary{border:1px solid var(--line);background:var(--panel);color:var(--text);box-shadow:0 6px 22px rgba(15,23,42,.04)}
+    .btn-secondary:hover{border-color:var(--blue);box-shadow:0 10px 26px rgba(37,99,235,.12)}
+
+    .surface{background:var(--panel);border:1px solid var(--line);box-shadow:0 18px 45px rgba(15,23,42,.05),0 1px 0 rgba(255,255,255,.7) inset;transition:transform .35s cubic-bezier(.22,1,.36,1),background .3s,border-color .3s,box-shadow .35s}
+    .dark .surface{box-shadow:0 24px 70px rgba(0,0,0,.32),0 1px 0 rgba(255,255,255,.04) inset}
+
+    .hero-visual{position:relative;border:1px solid rgba(99,102,241,.24);border-radius:28px;background:linear-gradient(155deg,rgba(255,255,255,.96),rgba(238,244,255,.92));box-shadow:0 32px 90px rgba(15,23,42,.12),0 0 65px rgba(37,99,235,.1);overflow:hidden}
+    .dark .hero-visual{background:linear-gradient(150deg,rgba(24,35,62,.95),rgba(9,14,26,.98));box-shadow:0 34px 105px rgba(0,0,0,.48),0 0 85px rgba(109,141,255,.16)}
+    .hero-visual:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 82% 10%,rgba(6,182,212,.14),transparent 38%),radial-gradient(circle at 14% 92%,rgba(124,58,237,.13),transparent 42%);pointer-events:none}
+
+    .code-line{font:12px/2 "DM Mono",monospace;color:var(--muted)}
+    .float-card{animation:float 6s ease-in-out infinite}
+    .float-card.delay{animation-delay:-2.5s}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+    .section-kicker{font:11px "DM Mono",monospace;letter-spacing:.17em;text-transform:uppercase;color:var(--blue)}
+    .section-title{font-size:clamp(2rem,4vw,3.3rem);line-height:1.08;letter-spacing:-.055em;font-weight:800}
+    .muted{color:var(--muted)}
+
+    .service-card{position:relative;overflow:hidden;transition:transform .32s cubic-bezier(.22,1,.36,1),border-color .32s,background .32s,box-shadow .32s}
+    .service-card:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,transparent,var(--blue),var(--cyan),transparent);opacity:0;transition:opacity .35s}
+    .service-card:after{content:"";position:absolute;width:190px;height:190px;right:-100px;top:-110px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.14),transparent 70%);filter:blur(28px);transition:.35s}
+    .dark .service-card:after{background:radial-gradient(circle,rgba(109,141,255,.22),transparent 70%)}
+    .service-card:hover{transform:translateY(-6px);border-color:rgba(99,102,241,.42);background:var(--panel-alt);box-shadow:0 24px 55px rgba(37,99,235,.1)}
+    .dark .service-card:hover{box-shadow:0 26px 65px rgba(0,0,0,.45),0 0 30px rgba(99,102,241,.12)}
+    .service-card:hover:before{opacity:1}
+    .service-card:hover:after{transform:scale(1.5)}
+
+    .icon-box{width:48px;height:48px;display:grid;place-items:center;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,var(--panel),var(--panel-alt));box-shadow:0 6px 18px rgba(15,23,42,.05)}
+
+    .project-card{overflow:hidden;transition:transform .35s cubic-bezier(.22,1,.36,1),border-color .35s,box-shadow .35s}
+    .project-card:hover{transform:translateY(-8px);border-color:rgba(99,102,241,.45);box-shadow:0 28px 65px rgba(15,23,42,.12)}
+    .dark .project-card:hover{box-shadow:0 30px 75px rgba(0,0,0,.5),0 0 36px rgba(99,102,241,.14)}
+
+    .project-preview{height:220px;position:relative;overflow:hidden;background:var(--panel-alt);border-bottom:1px solid var(--line)}
+    .preview-window{position:absolute;inset:20px 20px 0;border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;background:var(--panel);overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.1);transition:transform .5s cubic-bezier(.22,1,.36,1)}
+    .project-card:hover .preview-window{transform:translateY(-7px) scale(1.018)}
+
+    .window-bar{height:22px;background:var(--panel-alt);display:flex;align-items:center;gap:4px;padding:0 9px;border-bottom:1px solid var(--line)}
+    .window-bar i{width:5px;height:5px;border-radius:50%;background:var(--muted)}
+    .window-bar i:nth-child(1){background:#fb7185}
+    .window-bar i:nth-child(2){background:#fbbf24}
+    .window-bar i:nth-child(3){background:#34d399}
+
+    .mock-layout{display:grid;grid-template-columns:34px 1fr;height:calc(100% - 22px)}
+    .mock-sidebar{background:var(--panel-alt);padding:10px 7px;display:flex;flex-direction:column;gap:8px;border-right:1px solid var(--line)}
+    .mock-sidebar b{height:5px;border-radius:4px;background:var(--muted);opacity:.55}
+    .mock-main{padding:12px}
+    .mock-heading{height:9px;width:42%;border-radius:5px;background:linear-gradient(90deg,var(--blue),var(--cyan));margin-bottom:9px;opacity:.9}
+    .mock-sub{height:5px;width:68%;border-radius:5px;background:var(--muted);margin-bottom:12px;opacity:.5}
+    .mock-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+    .mock-stats span{height:39px;border-radius:6px;background:linear-gradient(145deg,var(--panel-alt),var(--panel));border:1px solid var(--line)}
+    .mock-chart{height:60px;margin-top:8px;border-radius:7px;background:linear-gradient(160deg,rgba(37,99,235,.08),var(--panel));position:relative;overflow:hidden;border:1px solid var(--line)}
+    .mock-chart:after{content:"";position:absolute;left:8%;right:8%;bottom:12px;height:30px;border-top:2px solid var(--blue);border-radius:50%;transform:rotate(-9deg)}
+
+    .aurora-preview{background:radial-gradient(circle at 72% 28%,#3b5978,#111c2e 62%,#0a101d)}
+    .aurora-preview .preview-window{background:#f5f1e9}
+    .aurora-layout{height:100%;padding:17px 19px;color:#202b36;background:linear-gradient(120deg,#f9f6f0,#ebe5d8)}
+    .aurora-nav{font-size:7px;letter-spacing:.16em;color:#536171;display:flex;justify-content:space-between}
+    .aurora-copy{margin-top:24px;width:52%;font-family:Georgia,serif;font-size:21px;line-height:1.02;color:#17283b}
+    .aurora-copy small{display:block;font:6px Inter,sans-serif;letter-spacing:.13em;margin-top:8px;color:#6b7887}
+    .aurora-product{position:absolute;right:20px;top:55px;width:70px;height:100px;border-radius:35px 35px 13px 13px;background:linear-gradient(120deg,#cbbd9e,#f5ebd6 50%,#9a896f);box-shadow:12px 12px 24px rgba(120,112,96,.38)}
+
+    .ai-preview{background:radial-gradient(circle at 25% 20%,#2e1065,#0f172a 65%,#060913)}
+    .ai-preview .preview-window{background:#0b1120;border-color:rgba(139,92,246,.35)}
+    .ai-preview .window-bar{background:#131c31;border-color:rgba(139,92,246,.22)}
+    .ai-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:10px;padding:12px;height:calc(100% - 22px)}
+    .ai-chat{display:flex;flex-direction:column;gap:7px;justify-content:center}
+    .ai-bubble{padding:7px 9px;border-radius:8px;font-size:8px;line-height:1.35}
+    .ai-user{background:rgba(148,163,184,.15);color:#cbd5e1;align-self:flex-start;max-width:85%}
+    .ai-bot{background:linear-gradient(135deg,rgba(124,58,237,.42),rgba(37,99,235,.35));border:1px solid rgba(167,139,250,.4);color:#f8fafc;align-self:flex-end;max-width:92%}
+    .ai-sync{background:#111827;border:1px solid rgba(16,185,129,.28);border-radius:8px;padding:8px;display:flex;flex-direction:column;justify-content:space-between}
+    .ai-badge{font:7px "DM Mono",monospace;color:#34d399;display:flex;align-items:center;gap:4px}
+    .ai-badge:before{content:"";width:5px;height:5px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981}
+    .ai-rows{display:flex;flex-direction:column;gap:5px;margin-top:6px}
+    .ai-rows span{height:14px;border-radius:4px;background:rgba(255,255,255,.06);border-left:2px solid #8b5cf6;display:block}
+    .ai-rows span:nth-child(2){border-left-color:#10b981}
+    .ai-rows span:nth-child(3){border-left-color:#38bdf8}
+
+    .game-preview{background:linear-gradient(160deg,#182044,#5b477b 55%,#e48a68)}
+    .game-preview .preview-window{background:linear-gradient(180deg,#252e55,#9a5f75 70%,#eaa477)}
+    .game-scene{position:absolute;inset:20px 20px 0;overflow:hidden;border-radius:12px 12px 0 0;background:linear-gradient(180deg,#242e57 0%,#87617d 62%,#e69b76 100%)}
+    .sun{position:absolute;width:48px;height:48px;border-radius:50%;background:#ffd29b;right:20px;top:18px;box-shadow:0 0 38px rgba(255,208,151,.65)}
+    .road{position:absolute;left:25%;right:25%;bottom:-35px;height:150px;background:#222b43;clip-path:polygon(42% 0,58% 0,100% 100%,0 100%)}
+    .road:after{content:"";position:absolute;left:49%;top:8px;height:100%;border-left:2px dashed rgba(255,255,255,.65)}
+    .runner{position:absolute;bottom:35px;left:49%;width:13px;height:31px;border-radius:8px 8px 4px 4px;background:#f3d6ad;box-shadow:0 -9px 0 -2px #20263d}
+
+    .tag{font:10px "DM Mono",monospace;letter-spacing:.08em;color:var(--muted)}
+    .skill-pill{border:1px solid var(--line);background:linear-gradient(145deg,var(--panel),var(--panel-alt));padding:10px 13px;border-radius:10px;color:var(--text);font-size:12px;font-weight:500;box-shadow:0 3px 10px rgba(15,23,42,.03);transition:.22s}
+    .skill-pill:hover{border-color:var(--blue);transform:translateY(-1px)}
+
+    .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+    .reveal.visible{opacity:1;transform:translateY(0)}
+    .delay-1{transition-delay:.1s}.delay-2{transition-delay:.2s}.delay-3{transition-delay:.3s}
+
+    .marquee{border-block:1px solid var(--line);background:linear-gradient(90deg,var(--panel-alt),rgba(99,102,241,.06),var(--panel-alt));overflow:hidden}
+    .marquee-track{display:flex;gap:44px;width:max-content;animation:marquee 28s linear infinite}
+    @keyframes marquee{to{transform:translateX(-50%)}}
+
+    .mobile-menu{display:none}.mobile-menu.open{display:flex}
+    .back-top{opacity:0;pointer-events:none;transition:.25s}.back-top.show{opacity:1;pointer-events:auto}
+    @media(max-width:760px){
+      .hero-title{font-size:clamp(2.6rem,11vw,4rem)}
+      .project-preview{height:190px}
+      .hero-visual{margin-top:10px}
+      .mobile-menu{position:fixed;top:78px;left:16px;right:16px;padding:18px;border:1px solid var(--line);border-radius:20px;background:var(--panel);box-shadow:0 25px 60px rgba(0,0,0,.22);backdrop-filter:blur(20px);flex-direction:column;gap:6px;z-index:99}
+      .mobile-menu a{padding:12px 16px;border-radius:10px;font-weight:600}
+      .mobile-menu a:hover{background:var(--panel-alt)}
+    }
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}.reveal{opacity:1;transform:none}}
   </style>
 </head>
-<body class="min-h-[100dvh] flex items-center justify-center p-0 md:p-4 lg:p-6 overflow-x-hidden">
-
-  <!-- Main Interactive Chat Container -->
-  <main class="w-full max-w-3xl h-[100dvh] md:h-[88vh] md:max-h-[850px] bg-white/95 backdrop-blur-xl md:rounded-3xl shadow-2xl border border-slate-200/80 flex flex-col overflow-hidden">
-    
-    <!-- Header inspired by clean chat UI with Top Wash branding -->
-    <header class="bg-white border-b border-slate-200/90 px-4 md:px-6 py-3 md:py-3.5 text-slate-800 flex items-center justify-between shrink-0 shadow-xs">
+<body class="antialiased">
+  <header class="fixed top-0 inset-x-0 z-50 nav-shell">
+    <nav class="container h-[78px] flex items-center justify-between relative" aria-label="Main navigation">
+      <a href="#home" class="flex items-center gap-3 font-extrabold tracking-[.12em] text-sm sm:text-base group">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm tracking-wider shadow-md transition duration-300 border border-[var(--line)]" style="background: var(--logo-bg); color: var(--logo-text);">
+          AF
+        </div>
+        <span>AHMED <span class="text-slate-500 dark:text-slate-400">FATHY</span></span>
+      </a>
+      <div class="hidden md:flex items-center gap-8 text-[13px] font-semibold">
+        <a class="nav-link active" href="#home">Home</a><a class="nav-link" href="#services">Services</a><a class="nav-link" href="#projects">Selected Work</a><a class="nav-link" href="#about">About</a><a class="nav-link" href="#contact">Contact</a>
+      </div>
       <div class="flex items-center gap-3">
-        <div class="relative float-soft">
-          <div class="w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-tr from-amber-400 via-purple-600 to-indigo-600 p-0.5 shadow-sm">
-            <div class="w-full h-full rounded-full bg-white flex items-center justify-center text-purple-700">
-              <i data-lucide="sparkles" class="w-5 h-5"></i>
+        <button id="themeToggle" class="w-10 h-10 grid place-items-center rounded-xl border border-[var(--line)] bg-[var(--panel)] text-[var(--text)] transition hover:border-[var(--blue)] shadow-sm" aria-label="Toggle theme">
+          <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-amber-400"></i>
+          <i data-lucide="moon" class="w-4 h-4 block dark:hidden text-slate-700"></i>
+        </button>
+        <div class="hidden md:flex items-center gap-2">
+          <!-- زر واتساب في الهيدر -->
+          <a class="btn btn-secondary !py-2.5 !px-3" href="https://wa.me/201035153618" target="_blank" rel="noopener noreferrer" title="WhatsApp">
+            <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 2c-5.516 0-9.969 4.453-9.969 9.969 0 1.766.469 3.484 1.359 5l-1.422 5.188 5.313-1.391c1.469.797 3.109 1.219 4.719 1.219 5.516 0 9.969-4.453 9.969-9.969s-4.453-10.015-9.969-10.015zm5.828 14.125c-.25.703-1.438 1.344-1.984 1.422-.516.078-1.156.109-1.859-.109-.438-.141-.984-.328-1.688-.641-2.969-1.281-4.906-4.266-5.063-4.469-.141-.203-1.203-1.594-1.203-3.047s.766-2.156 1.031-2.453c.266-.297.578-.375.766-.375.188 0 .375.016.547.016.188 0 .422-.063.656.5.25.594.828 2.016.906 2.172.078.156.125.328.016.531-.094.203-.156.328-.313.516-.156.188-.328.406-.469.547-.156.156-.328.328-.141.641.188.313.844 1.391 1.813 2.25 1.25 1.109 2.297 1.453 2.609 1.609.313.156.5.125.688-.078.188-.203.781-.906.984-1.219.203-.313.422-.266.703-.156.281.109 1.797.844 2.109 1 .313.156.516.234.594.375.078.141.078.813-.172 1.516z"/></svg>
+          </a>
+          <!-- زر جيميل في الهيدر -->
+          <a class="btn btn-secondary !py-2.5 !px-3" href="mailto:ahmadfathi561@gmail.com" title="Gmail">
+            <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+          </a>
+          <a class="btn btn-primary !py-3 !px-4" href="https://airtable.com/appNPUYOT6lgHF4NH/pagFdwduK8s9TVuHR/form" target="_blank" rel="noopener noreferrer">Start a Project <i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+        </div>
+        <button id="menuToggle" class="md:hidden w-10 h-10 grid place-items-center rounded-xl border border-[var(--line)] bg-[var(--panel)] text-[var(--text)]" aria-label="Open navigation" aria-expanded="false"><i data-lucide="menu"></i></button>
+      </div>
+      <div id="mobileMenu" class="mobile-menu md:hidden">
+        <a href="#home">Home</a>
+        <a href="#services">Services</a>
+        <a href="#projects">Selected Work</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+        <div class="h-px bg-[var(--line)] my-2"></div>
+        <a class="text-[var(--blue)] font-bold flex items-center justify-between" href="https://airtable.com/appNPUYOT6lgHF4NH/pagFdwduK8s9TVuHR/form" target="_blank" rel="noopener noreferrer">Start a Project (Airtable) <i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+        <a class="text-emerald-500 font-bold flex items-center justify-between" href="https://wa.me/201035153618" target="_blank" rel="noopener noreferrer">WhatsApp Chat 📱</a>
+        <a class="text-amber-500 font-bold flex items-center justify-between" href="mailto:ahmadfathi561@gmail.com">Email Me ✉️</a>
+        <a class="text-blue-600 font-bold flex items-center justify-between" href="https://www.facebook.com/profile.php?id=61594261439402" target="_blank" rel="noopener noreferrer">Facebook Profile 👤</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section id="home" class="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden">
+      <div class="hero-orb w-[540px] h-[540px] bg-indigo-500/25 dark:bg-indigo-600 top-[-100px] right-[-110px]"></div>
+      <div class="hero-orb w-[440px] h-[440px] bg-cyan-400/25 dark:bg-cyan-500 bottom-[-160px] left-[22%]"></div>
+      <div class="container grid lg:grid-cols-[1.08fr_.92fr] gap-12 items-center relative z-10">
+        <div class="reveal">
+          <div class="eyebrow mb-7"><span class="eyebrow-dot"></span> Independent Developer · Open to Projects</div>
+          <p class="section-kicker mb-5">DESIGNING WITH PURPOSE. BUILDING WITH PRECISION.</p>
+          <h1 class="hero-title">Ideas into<br><span class="gradient-text">digital impact.</span></h1>
+          <p class="mt-7 max-w-[550px] text-[15px] sm:text-[17px] leading-8 text-[var(--muted)]">I’m Ahmed Fathy — a web designer and digital solutions developer creating thoughtful websites, e-commerce experiences, and custom systems that help businesses move forward.</p>
+          <div class="flex flex-wrap gap-3 mt-9">
+            <a href="#projects" class="btn btn-primary">Explore selected work <i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+            <a href="https://airtable.com/appNPUYOT6lgHF4NH/pagFdwduK8s9TVuHR/form" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Start a project <i data-lucide="external-link" class="w-4 h-4 text-[var(--blue)]"></i></a>
+          </div>
+          <div class="mt-12 flex flex-wrap gap-x-8 gap-y-3 text-xs text-[var(--muted)]">
+            <span class="flex items-center gap-2"><i data-lucide="monitor-smartphone" class="w-4 h-4 text-[var(--blue)]"></i> Responsive experiences</span>
+            <span class="flex items-center gap-2"><i data-lucide="workflow" class="w-4 h-4 text-[var(--cyan)]"></i> Business-focused solutions</span>
+          </div>
+        </div>
+        <div class="reveal delay-2 relative">
+          <div class="hero-visual p-5 sm:p-6">
+            <div class="relative z-10 flex items-center justify-between border-b border-[var(--line)] pb-4 mb-5">
+              <div class="flex gap-1.5"><i class="w-2.5 h-2.5 rounded-full bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,.6)]"></i><i class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,.6)]"></i><i class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,.6)]"></i></div>
+              <span class="tag">AHMEDFATHY / WORKSPACE</span><span class="tag text-emerald-600 dark:text-emerald-300 font-semibold">● LIVE</span>
+            </div>
+            <div class="relative z-10">
+              <div class="flex items-end justify-between mb-5"><div><p class="tag mb-2">DIGITAL PRODUCT DESIGN</p><h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Build something<br><span class="gradient-text">remarkable.</span></h2></div><div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/15 to-cyan-500/15 border border-indigo-500/25 grid place-items-center text-[var(--blue)] shadow-sm"><i data-lucide="command" class="w-6 h-6"></i></div></div>
+              <div class="rounded-2xl border border-[var(--line)] bg-[var(--panel-alt)]/90 p-4 sm:p-5 backdrop-blur-sm">
+                <div class="flex justify-between items-center mb-4"><span class="tag">SELECTED PROJECTS</span><span class="tag">01 — 04</span></div>
+                <a href="https://ahmadfathi561-collab.github.io/Ai_Agent/" target="_blank" rel="noopener noreferrer" class="float-card flex items-center gap-3 p-3 rounded-xl bg-[var(--panel)] border border-[var(--line)] mb-2 hover:border-violet-500 transition shadow-sm">
+                  <span class="w-10 h-10 rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-400 grid place-items-center"><i data-lucide="bot" class="w-5 h-5"></i></span><span class="flex-1"><b class="block text-sm">AI Operations Agent</b><small class="text-[var(--muted)]">Autonomous support & order sync</small></span><i data-lucide="arrow-up-right" class="w-4 h-4 text-[var(--muted)]"></i>
+                </a>
+                <a href="https://ahmadfathi561-collab.github.io/El_Tohammy1/" target="_blank" rel="noopener noreferrer" class="float-card delay flex items-center gap-3 p-3 rounded-xl bg-[var(--panel)] border border-[var(--line)] mb-2 hover:border-blue-500 transition shadow-sm">
+                  <span class="w-10 h-10 rounded-xl bg-blue-500/15 text-[var(--blue)] grid place-items-center"><i data-lucide="gauge" class="w-5 h-5"></i></span><span class="flex-1"><b class="block text-sm">El Tohammy Pro</b><small class="text-[var(--muted)]">Showroom management system</small></span><i data-lucide="arrow-up-right" class="w-4 h-4 text-[var(--muted)]"></i>
+                </a>
+                <a href="https://ahmadfathi561-collab.github.io/AURORA/" target="_blank" rel="noopener noreferrer" class="float-card flex items-center gap-3 p-3 rounded-xl bg-[var(--panel)] border border-[var(--line)] mb-2 hover:border-cyan-500 transition shadow-sm">
+                  <span class="w-10 h-10 rounded-xl bg-cyan-500/10 text-[var(--cyan)] grid place-items-center"><i data-lucide="shopping-bag" class="w-5 h-5"></i></span><span class="flex-1"><b class="block text-sm">AURORA</b><small class="text-[var(--muted)]">E-commerce concept</small></span><i data-lucide="arrow-up-right" class="w-4 h-4 text-[var(--muted)]"></i>
+                </a>
+                <a href="https://sunset-escape-endless-run.vercel.app/" target="_blank" rel="noopener noreferrer" class="float-card delay flex items-center gap-3 p-3 rounded-xl bg-[var(--panel)] border border-[var(--line)] hover:border-purple-500 transition shadow-sm">
+                  <span class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-300 grid place-items-center"><i data-lucide="gamepad-2" class="w-5 h-5"></i></span><span class="flex-1"><b class="block text-sm">Sunset Escape</b><small class="text-[var(--muted)]">Interactive browser game</small></span><i data-lucide="arrow-up-right" class="w-4 h-4 text-[var(--muted)]"></i>
+                </a>
+              </div>
+              <div class="flex items-center justify-between mt-4 text-[10px] text-[var(--muted)]"><span class="tag">THINK · DESIGN · DEVELOP</span><span>CRAFTED FOR THE WEB ↗</span></div>
             </div>
           </div>
-          <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full absolute bottom-0 right-0 ring-2 ring-white"></span>
-        </div>
-        <div>
-          <div class="flex items-center gap-1.5">
-            <h1 class="font-extrabold text-sm md:text-base text-slate-900">خدمة العملاء والحجز الذكي</h1>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">✨ Top Wash</span>
-          </div>
-          <p class="text-[11px] md:text-xs text-slate-500 flex items-center gap-1.5">
-            <span>🫧 العناية وتنظيف المفروشات</span>
-            <span class="hidden sm:inline">•</span>
-            <span class="text-emerald-600 font-bold">متاح فورًا</span>
-          </p>
+          <div class="absolute -z-10 -right-5 -bottom-7 w-36 h-36 border border-cyan-400/30 rounded-full"></div>
+          <div class="absolute -z-10 -left-7 top-16 w-20 h-20 border border-indigo-400/30 rounded-2xl rotate-12"></div>
         </div>
       </div>
+    </section>
 
-      <button onclick="resetChat()" class="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-purple-50 text-slate-700 hover:text-purple-700 border border-slate-200 text-[11px] md:text-xs font-bold flex items-center gap-1.5 transition shrink-0">
-        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-        <span>محادثة جديدة</span>
-      </button>
-    </header>
-
-    <!-- Chat Messages Area -->
-    <div id="chatContainer" class="flex-1 overflow-y-auto p-3.5 md:p-5 space-y-3.5 bg-white">
-      <!-- Messages rendered here and persisted in localStorage -->
+    <div class="marquee py-4">
+      <div class="marquee-track tag">
+        <span>WEB DESIGN</span><span>✳</span><span>FRONTEND DEVELOPMENT</span><span>✳</span><span>AI AGENTS & AUTOMATION</span><span>✳</span><span>E-COMMERCE</span><span>✳</span><span>CUSTOM WEB SYSTEMS</span><span>✳</span><span>UI / UX</span><span>✳</span>
+        <span>WEB DESIGN</span><span>✳</span><span>FRONTEND DEVELOPMENT</span><span>✳</span><span>AI AGENTS & AUTOMATION</span><span>✳</span><span>E-COMMERCE</span><span>✳</span><span>CUSTOM WEB SYSTEMS</span><span>✳</span><span>UI / UX</span><span>✳</span>
+      </div>
     </div>
 
-    <!-- Bottom Input Bar inspired by clean chat composer -->
-    <div class="p-3 md:p-3.5 bg-white border-t border-slate-200/80 shrink-0">
-      <form onsubmit="sendMessage(event)" class="flex items-end gap-2">
-        <!-- Location Helper Button -->
-        <button
-          type="button"
-          onclick="openMapModal()"
-          class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-3 md:px-3.5 py-2.5 md:py-3 rounded-full text-[11px] md:text-xs font-bold flex items-center gap-1 transition shrink-0 shadow-2xs"
-          title="تحديد الموقع أو إرسال العنوان بالتفصيل"
-        >
-          <i data-lucide="map-pin" class="w-4 h-4 text-amber-600"></i>
-          <span class="hidden sm:inline">إرسال العنوان</span>
-        </button>
+    <section id="services" class="py-24 sm:py-32 relative">
+      <div class="container">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 reveal">
+          <div><p class="section-kicker mb-4">WHAT I DO</p><h2 class="section-title max-w-[650px]">Digital solutions built<br>around <span class="gradient-text">real needs.</span></h2></div>
+          <p class="muted max-w-sm leading-7 text-sm">From a clear online presence to a tailored business platform, every build starts with understanding the problem.</p>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <article class="surface service-card rounded-2xl p-7 reveal"><div class="icon-box mb-6 text-blue-600 dark:text-blue-400"><i data-lucide="panels-top-left"></i></div><p class="tag mb-3">01 / PRESENCE</p><h3 class="text-lg font-bold mb-3">Business Websites</h3><p class="muted text-sm leading-7">Professional websites that establish credibility, express your brand, and make your services easy to understand.</p></article>
+          <article class="surface service-card rounded-2xl p-7 reveal delay-1"><div class="icon-box mb-6 text-cyan-600 dark:text-cyan-400"><i data-lucide="shopping-cart"></i></div><p class="tag mb-3">02 / COMMERCE</p><h3 class="text-lg font-bold mb-3">E-Commerce Websites</h3><p class="muted text-sm leading-7">Online stores with thoughtful product presentation, intuitive browsing, and smooth shopping journeys.</p></article>
+          <article class="surface service-card rounded-2xl p-7 reveal delay-2"><div class="icon-box mb-6 text-indigo-600 dark:text-indigo-400"><i data-lucide="settings-2"></i></div><p class="tag mb-3">03 / OPERATIONS</p><h3 class="text-lg font-bold mb-3">Custom Business Systems</h3><p class="muted text-sm leading-7">Purpose-built web applications that help organize information, manage workflows, and simplify daily operations.</p></article>
+          <article class="surface service-card rounded-2xl p-7 reveal"><div class="icon-box mb-6 text-violet-600 dark:text-violet-400"><i data-lucide="store"></i></div><p class="tag mb-3">04 / SHOWCASE</p><h3 class="text-lg font-bold mb-3">Showroom & Real Estate</h3><p class="muted text-sm leading-7">Visual-first experiences for showrooms, property businesses, furniture brands, and product catalogs.</p></article>
+          <article class="surface service-card rounded-2xl p-7 reveal delay-1"><div class="icon-box mb-6 text-sky-600 dark:text-sky-400"><i data-lucide="mouse-pointer-click"></i></div><p class="tag mb-3">05 / CAMPAIGNS</p><h3 class="text-lg font-bold mb-3">Landing Pages</h3><p class="muted text-sm leading-7">Focused pages that communicate one clear message, highlight an offer, and encourage meaningful action.</p></article>
+          <article class="surface service-card rounded-2xl p-7 reveal delay-2"><div class="icon-box mb-6 text-emerald-600 dark:text-emerald-400"><i data-lucide="refresh-cw"></i></div><p class="tag mb-3">06 / IMPROVEMENT</p><h3 class="text-lg font-bold mb-3">Website Redesign</h3><p class="muted text-sm leading-7">A considered refresh for outdated websites, improving clarity, usability, responsiveness, and visual quality.</p></article>
+        </div>
+      </div>
+    </section>
 
-        <div class="flex-1 flex items-center bg-slate-100/90 border border-slate-200/90 focus-within:border-purple-500 focus-within:bg-white rounded-3xl px-3.5 transition">
-          <textarea
-            id="userInput"
-            rows="1"
-            placeholder="اكتب رسالتك هنا... 😊"
-            onkeydown="handleInputKeydown(event)"
-            oninput="autoResizeInput(this)"
-            class="w-full bg-transparent text-slate-800 placeholder-slate-400 py-2.5 md:py-3 text-xs md:text-sm focus:outline-none resize-none max-h-32 leading-relaxed"
-            autocomplete="off"
-          ></textarea>
+    <section id="projects" class="py-24 sm:py-32 bg-[var(--panel-alt)] border-y border-[var(--line)]">
+      <div class="container">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 reveal">
+          <div><p class="section-kicker mb-4">SELECTED WORK</p><h2 class="section-title">A few things I’ve<br><span class="gradient-text">brought to life.</span></h2></div>
+          <p class="muted max-w-sm leading-7 text-sm">A selection of business-focused builds and creative experiments. Each project explores a different digital experience.</p>
+        </div>
+        <div class="grid lg:grid-cols-2 gap-6">
+          <article class="surface project-card rounded-2xl reveal">
+            <div class="project-preview">
+              <div class="preview-window"><div class="window-bar"><i></i><i></i><i></i></div><div class="mock-layout"><div class="mock-sidebar"><b></b><b></b><b></b><b></b><b></b></div><div class="mock-main"><div class="mock-heading"></div><div class="mock-sub"></div><div class="mock-stats"><span></span><span></span><span></span></div><div class="mock-chart"></div></div></div></div>
+              <span class="absolute top-4 right-4 tag bg-slate-950/75 text-white backdrop-blur-md border border-white/15 rounded-full px-3 py-1.5 shadow-sm">BUSINESS SYSTEM</span>
+            </div>
+            <div class="p-6 sm:p-7">
+              <div class="flex items-center justify-between gap-3 mb-3"><span class="tag text-[var(--blue)]">01 / MANAGEMENT</span><span class="text-[10px] text-[var(--muted)]">CUSTOM SYSTEM</span></div>
+              <h3 class="text-2xl font-extrabold tracking-tight">EL TOHAMMY PRO</h3>
+              <p class="muted text-sm leading-7 mt-3 max-w-xl">A customized administrative and accounting management system for a motorcycle showroom, designed to organize inventory, sales, installments, and financial activity.</p>
+              <div class="flex flex-wrap gap-2 mt-5"><span class="skill-pill">Dashboard</span><span class="skill-pill">Inventory</span><span class="skill-pill">Sales workflow</span></div>
+              <a class="inline-flex items-center gap-2 mt-7 text-sm font-bold text-[var(--blue)] hover:opacity-85 transition" href="https://ahmadfathi561-collab.github.io/El_Tohammy1/" target="_blank" rel="noopener noreferrer">Explore live project <i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+            </div>
+          </article>
+
+          <article class="surface project-card rounded-2xl reveal delay-1">
+            <div class="project-preview aurora-preview">
+              <div class="preview-window"><div class="window-bar"><i></i><i></i><i></i></div><div class="aurora-layout"><div class="aurora-nav"><b>A U R O R A</b><span>COLLECTION&nbsp;&nbsp; ABOUT&nbsp;&nbsp; BAG</span></div><div class="aurora-copy">Objects for<br>everyday living<small>CURATED DESIGN · TIMELESS FORM</small></div><div class="aurora-product"></div></div></div>
+              <span class="absolute top-4 right-4 tag bg-slate-950/75 text-white backdrop-blur-md border border-white/15 rounded-full px-3 py-1.5 shadow-sm">E-COMMERCE</span>
+            </div>
+            <div class="p-6 sm:p-7">
+              <div class="flex items-center justify-between gap-3 mb-3"><span class="tag text-[var(--cyan)]">02 / COMMERCE</span><span class="text-[10px] text-[var(--muted)]">CONCEPT PROJECT</span></div>
+              <h3 class="text-2xl font-extrabold tracking-tight">AURORA</h3>
+              <p class="muted text-sm leading-7 mt-3 max-w-xl">A conceptual e-commerce experience showcasing a modern online store, premium product presentation, and a streamlined shopping journey.</p>
+              <div class="flex flex-wrap gap-2 mt-5"><span class="skill-pill">Online store</span><span class="skill-pill">Product catalog</span><span class="skill-pill">Shopping UX</span></div>
+              <a class="inline-flex items-center gap-2 mt-7 text-sm font-bold text-[var(--cyan)] hover:opacity-85 transition" href="https://ahmadfathi561-collab.github.io/AURORA/" target="_blank" rel="noopener noreferrer">Explore live store <i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+            </div>
+          </article>
+
+          <article class="surface project-card rounded-2xl reveal">
+            <div class="project-preview ai-preview">
+              <div class="preview-window">
+                <div class="window-bar"><i></i><i></i><i></i></div>
+                <div class="ai-layout">
+                  <div class="ai-chat">
+                    <div class="ai-bubble ai-user">Can I add an item to my existing order?</div>
+                    <div class="ai-bubble ai-bot">Verified #ORD-842. Item added & dashboard updated.</div>
+                  </div>
+                  <div class="ai-sync">
+                    <span class="ai-badge">SYNCED</span>
+                    <div class="ai-rows"><span></span><span></span><span></span></div>
+                  </div>
+                </div>
+              </div>
+              <span class="absolute top-4 right-4 tag bg-slate-950/75 text-white backdrop-blur-md border border-white/15 rounded-full px-3 py-1.5 shadow-sm">AI OPERATIONS</span>
+            </div>
+            <div class="p-6 sm:p-7">
+              <div class="flex items-center justify-between gap-3 mb-3"><span class="tag text-violet-600 dark:text-violet-400">03 / AI & AUTOMATION</span><span class="text-[10px] text-[var(--muted)]">LIVE SYSTEM</span></div>
+              <h3 class="text-2xl font-extrabold tracking-tight">AI OPERATIONS AGENT</h3>
+              <p class="muted text-sm leading-7 mt-3 max-w-xl">An autonomous customer support agent that analyzes requests, plans actions, and executes live dashboard operations—handling bookings, modifications, cancellations, holds, complaints, and instant order follow-ups.</p>
+              <div class="flex flex-wrap gap-2 mt-5"><span class="skill-pill">AI Agent</span><span class="skill-pill">Live Dashboard</span><span class="skill-pill">Order Automation</span></div>
+              <a class="inline-flex items-center gap-2 mt-7 text-sm font-bold text-violet-600 dark:text-violet-400 hover:opacity-85 transition" href="https://ahmadfathi561-collab.github.io/Ai_Agent/" target="_blank" rel="noopener noreferrer">Explore live agent <i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+            </div>
+          </article>
+
+          <article class="surface project-card rounded-2xl reveal delay-1">
+            <div class="project-preview game-preview">
+              <div class="game-scene"><div class="sun"></div><div class="road"></div><div class="runner"></div></div>
+              <span class="absolute top-4 right-4 tag bg-slate-950/75 text-white backdrop-blur-md border border-white/15 rounded-full px-3 py-1.5 shadow-sm">INTERACTIVE EXPERIENCE</span>
+            </div>
+            <div class="p-6 sm:p-7">
+              <div class="flex items-center justify-between gap-3 mb-3"><span class="tag text-purple-600 dark:text-purple-400">04 / CREATIVE DEVELOPMENT</span><span class="text-[10px] text-[var(--muted)]">PLAYABLE</span></div>
+              <h3 class="text-2xl font-extrabold tracking-tight">SUNSET ESCAPE</h3>
+              <p class="muted text-sm leading-7 mt-3 max-w-xl">An interactive 3D endless-runner gaming experience created to explore gameplay interaction, browser-based physics, and creative development.</p>
+              <div class="flex flex-wrap gap-2 mt-5"><span class="skill-pill">3D Web Game</span><span class="skill-pill">Browser Physics</span><span class="skill-pill">Interactive UX</span></div>
+              <a class="inline-flex items-center gap-2 mt-7 text-sm font-bold text-purple-600 dark:text-purple-400 hover:opacity-85 transition" href="https://sunset-escape-endless-run.vercel.app/" target="_blank" rel="noopener noreferrer">Play the experience <i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="py-24 sm:py-32">
+      <div class="container grid lg:grid-cols-[.9fr_1.1fr] gap-14 items-start">
+        <div class="reveal">
+          <p class="section-kicker mb-4">A LITTLE ABOUT ME</p>
+          <h2 class="section-title">Good design is<br>more than <span class="gradient-text">how it looks.</span></h2>
+          <p class="muted leading-8 text-sm mt-7">I’m Ahmed Fathy, a web designer and digital solutions developer focused on transforming business ideas into useful, well-crafted digital products.</p>
+          <p class="muted leading-8 text-sm mt-4">My approach brings together visual thinking, practical problem-solving, and attention to detail. I believe a successful digital experience should look considered, feel intuitive, and serve a clear purpose.</p>
+          <a href="https://airtable.com/appNPUYOT6lgHF4NH/pagFdwduK8s9TVuHR/form" target="_blank" rel="noopener noreferrer" class="btn btn-secondary mt-7">Have a project in mind? <i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+        </div>
+        <div class="surface rounded-2xl p-6 sm:p-8 reveal delay-1">
+          <div class="flex items-center justify-between mb-7"><div><p class="tag mb-2">MY TOOLKIT</p><h3 class="text-xl font-bold">Core expertise</h3></div><div class="icon-box text-[var(--blue)]"><i data-lucide="code-2"></i></div></div>
+          <div class="space-y-6">
+            <div><div class="flex justify-between text-sm mb-3"><b>Frontend Development</b><span class="tag">01</span></div><div class="flex flex-wrap gap-2"><span class="skill-pill">JavaScript</span><span class="skill-pill">React</span><span class="skill-pill">Tailwind CSS</span></div></div>
+            <div class="h-px bg-[var(--line)]"></div>
+            <div><div class="flex justify-between text-sm mb-3"><b>Design & Experience</b><span class="tag">02</span></div><div class="flex flex-wrap gap-2"><span class="skill-pill">Responsive Design</span><span class="skill-pill">UI / UX</span><span class="skill-pill">Wireframing</span></div></div>
+            <div class="h-px bg-[var(--line)]"></div>
+            <div><div class="flex justify-between text-sm mb-3"><b>Digital Solutions</b><span class="tag">03</span></div><div class="flex flex-wrap gap-2"><span class="skill-pill">Business Websites</span><span class="skill-pill">E-Commerce</span><span class="skill-pill">Custom Web Systems</span></div></div>
+          </div>
+          <div class="mt-9 rounded-xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-cyan-500/10 border border-indigo-500/20 p-4 flex gap-3 items-start"><i data-lucide="lightbulb" class="w-5 h-5 text-[var(--blue)] shrink-0 mt-0.5"></i><p class="text-xs text-[var(--muted)] leading-6">I focus on building digital experiences that balance visual quality with real-world usability.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- قسم التواصل الاحترافي المميز في نهاية الموقع مع أيقونات SVG مضمونة البقاء والوضوح -->
+    <section id="contact" class="py-24 sm:py-32 bg-[var(--panel-alt)] border-t border-[var(--line)]">
+      <div class="container">
+        <div class="text-center max-w-2xl mx-auto mb-16 reveal">
+          <p class="section-kicker mb-4">GET IN TOUCH</p>
+          <h2 class="section-title">Let’s start a conversation<br><span class="gradient-text">or build together.</span></h2>
+          <p class="muted text-sm sm:text-base leading-7 mt-4">Choose your preferred way to reach out. Whether you want to fill the project brief or chat directly via WhatsApp, Email, or Facebook.</p>
         </div>
 
-        <button
-          id="sendBtn"
-          type="submit"
-          class="bg-gradient-to-r from-amber-400 via-purple-600 to-indigo-600 hover:opacity-95 text-white px-4 md:px-5 py-2.5 md:py-3 rounded-full font-bold text-xs md:text-sm flex items-center gap-1.5 transition shrink-0 shadow-md"
-        >
-          <span>إرسال</span>
-          <i data-lucide="send" class="w-4 h-4"></i>
-        </button>
-      </form>
-    </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- 1. Airtable Project Brief -->
+          <a href="https://airtable.com/appNPUYOT6lgHF4NH/pagFdwduK8s9TVuHR/form" target="_blank" rel="noopener noreferrer" class="surface service-card rounded-2xl p-7 reveal group flex flex-col justify-between border-blue-500/30 hover:border-blue-500">
+            <div>
+              <div class="icon-box mb-6 bg-blue-500/10 text-[var(--blue)] group-hover:scale-110 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              </div>
+              <p class="tag mb-2 text-blue-500">RECOMMENDED</p>
+              <h3 class="text-lg font-bold mb-2">Project Brief</h3>
+              <p class="muted text-xs leading-6">Fill out your full project specifications directly via our Airtable form.</p>
+            </div>
+            <div class="mt-6 flex items-center gap-2 text-xs font-bold text-[var(--blue)]">Start via Airtable <span class="text-sm">↗</span></div>
+          </a>
 
+          <!-- 2. WhatsApp -->
+          <a href="https://wa.me/201035153618" target="_blank" rel="noopener noreferrer" class="surface service-card rounded-2xl p-7 reveal delay-1 flex flex-col justify-between hover:border-emerald-500 group">
+            <div>
+              <div class="icon-box mb-6 bg-emerald-500/10 text-emerald-500 group-hover:scale-110 transition">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 2c-5.516 0-9.969 4.453-9.969 9.969 0 1.766.469 3.484 1.359 5l-1.422 5.188 5.313-1.391c1.469.797 3.109 1.219 4.719 1.219 5.516 0 9.969-4.453 9.969-9.969s-4.453-10.015-9.969-10.015zm5.828 14.125c-.25.703-1.438 1.344-1.984 1.422-.516.078-1.156.109-1.859-.109-.438-.141-.984-.328-1.688-.641-2.969-1.281-4.906-4.266-5.063-4.469-.141-.203-1.203-1.594-1.203-3.047s.766-2.156 1.031-2.453c.266-.297.578-.375.766-.375.188 0 .375.016.547.016.188 0 .422-.063.656.5.25.594.828 2.016.906 2.172.078.156.125.328.016.531-.094.203-.156.328-.313.516-.156.188-.328.406-.469.547-.156.156-.328.328-.141.641.188.313.844 1.391 1.813 2.25 1.25 1.109 2.297 1.453 2.609 1.609.313.156.5.125.688-.078.188-.203.781-.906.984-1.219.203-.313.422-.266.703-.156.281.109 1.797.844 2.109 1 .313.156.516.234.594.375.078.141.078.813-.172 1.516z"/></svg>
+              </div>
+              <p class="tag mb-2 text-emerald-500">DIRECT CHAT</p>
+              <h3 class="text-lg font-bold mb-2">WhatsApp</h3>
+              <p class="muted text-xs leading-6">01035153618 — Quick response for urgent inquiries and direct talks.</p>
+            </div>
+            <div class="mt-6 flex items-center gap-2 text-xs font-bold text-emerald-500">Chat on WhatsApp <span class="text-sm">↗</span></div>
+          </a>
+
+          <!-- 3. Gmail -->
+          <a href="mailto:ahmadfathi561@gmail.com" class="surface service-card rounded-2xl p-7 reveal delay-2 flex flex-col justify-between hover:border-amber-500 group">
+            <div>
+              <div class="icon-box mb-6 bg-amber-500/10 text-amber-500 group-hover:scale-110 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+              </div>
+              <p class="tag mb-2 text-amber-500">INBOX</p>
+              <h3 class="text-lg font-bold mb-2">Email Me</h3>
+              <p class="muted text-xs leading-6">ahmadfathi561@gmail.com — Send detailed proposals or documents.</p>
+            </div>
+            <div class="mt-6 flex items-center gap-2 text-xs font-bold text-amber-500">Send an Email <span class="text-sm">↗</span></div>
+          </a>
+
+          <!-- 4. Facebook -->
+          <a href="https://www.facebook.com/profile.php?id=61594261439402" target="_blank" rel="noopener noreferrer" class="surface service-card rounded-2xl p-7 reveal delay-3 flex flex-col justify-between hover:border-blue-600 group">
+            <div>
+              <div class="icon-box mb-6 bg-blue-600/10 text-blue-600 group-hover:scale-110 transition">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg>
+              </div>
+              <p class="tag mb-2 text-blue-600">SOCIAL PROFILE</p>
+              <h3 class="text-lg font-bold mb-2">Facebook</h3>
+              <p class="muted text-xs leading-6">Connect and follow updates on my personal Facebook profile.</p>
+            </div>
+            <div class="mt-6 flex items-center gap-2 text-xs font-bold text-blue-600">Visit Profile <span class="text-sm">↗</span></div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="pb-24 sm:pb-32 pt-12">
+      <div class="container">
+        <div class="relative overflow-hidden rounded-3xl border border-indigo-400/25 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white p-8 sm:p-12 reveal shadow-2xl">
+          <div class="absolute -right-16 -top-28 w-80 h-80 rounded-full bg-indigo-500/25 blur-[85px]"></div>
+          <div class="absolute right-[25%] -bottom-36 w-72 h-72 rounded-full bg-cyan-400/15 blur-[85px]"></div>
+          <div class="relative z-10 max-w-3xl">
+            <p class="section-kicker mb-4 text-cyan-300">LET’S BUILD SOMETHING USEFUL</p>
+            <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">Have an idea?<br><span class="bg-gradient-to-r from-white via-indigo-200 to-cyan-300 bg-clip-text text-transparent">Let’s make it happen.</span></h2>
+            <p class="text-slate-300 text-sm sm:text-base leading-7 mt-5 max-w-xl">Tell me what you’re working on. Share your requirements through the project form and let’s explore the right digital solution for your business.</p>
+            <div class="flex flex-wrap gap-4 mt-8">
+              <a href="https://airtable.com/appNPUYOT6lgHF4NH/pagFdwduK8s9TVuHR/form" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Start a Project (Airtable) <i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+              <a href="https://wa.me/201035153618" target="_blank" rel="noopener noreferrer" class="btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg">WhatsApp Chat <span class="text-sm">💬</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <!-- Location Modal -->
-  <div id="mapModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3 md:p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-purple-100 flex flex-col max-h-[90vh]">
-      <div class="p-3.5 md:p-4 bg-gradient-to-l from-purple-700 to-indigo-600 text-white flex items-center justify-between shrink-0">
-        <div class="flex items-center gap-2">
-          <i data-lucide="map-pin" class="w-5 h-5"></i>
-          <h3 class="font-bold text-sm">مشاركة العنوان التفصيلي للتيم 📍</h3>
-        </div>
-        <button onclick="closeMapModal()" class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30">✕</button>
+  <footer class="border-t border-[var(--line)] py-8">
+    <div class="container flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <a href="#home" class="font-extrabold tracking-[.12em] text-sm flex items-center gap-2">
+        <span class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs" style="background: var(--logo-bg); color: var(--logo-text);">AF</span>
+        AHMED <span class="text-[var(--muted)]">FATHY</span>
+      </a>
+      <div class="flex items-center gap-4 text-xs text-[var(--muted)]">
+        <a href="https://www.facebook.com/profile.php?id=61594261439402" target="_blank" rel="noopener noreferrer" class="hover:text-[var(--text)]">Facebook</a>
+        <span>•</span>
+        <a href="https://wa.me/201035153618" target="_blank" rel="noopener noreferrer" class="hover:text-[var(--text)]">WhatsApp</a>
+        <span>•</span>
+        <a href="mailto:ahmadfathi561@gmail.com" class="hover:text-[var(--text)]">Gmail</a>
       </div>
-
-      <div class="p-3.5 md:p-4 space-y-3 overflow-y-auto flex-1">
-        <div class="flex flex-wrap gap-2">
-          <button type="button" onclick="locateCustomerNow()" class="flex-1 min-w-[160px] bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2.5 md:py-3 rounded-xl text-xs md:text-sm font-extrabold shadow-sm">📍 حدد موقعي الآن</button>
-          <button type="button" onclick="centerMapOnEgypt()" class="px-3.5 py-2.5 md:py-3 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200">عرض مصر</button>
-        </div>
-        <p id="locationStatus" class="text-xs text-slate-600 bg-slate-50 rounded-xl p-3 border border-slate-100">اسمح للمتصفح بالوصول للموقع، أو اضغط على الخريطة لتحديد مكانك يدويًا.</p>
-        <div id="customerMap" class="w-full h-[260px] md:h-[320px] rounded-2xl border border-slate-200 z-0"></div>
-        <div class="grid grid-cols-2 gap-2">
-          <div><label class="block text-[11px] font-bold text-slate-600 mb-1">خط العرض</label><input id="modalLatitude" readonly dir="ltr" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs" placeholder="لم يتم التحديد"></div>
-          <div><label class="block text-[11px] font-bold text-slate-600 mb-1">خط الطول</label><input id="modalLongitude" readonly dir="ltr" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs" placeholder="لم يتم التحديد"></div>
-        </div>
-        <div><label class="block text-xs font-bold text-slate-700 mb-1">العنوان التفصيلي (المنطقة، الشارع، رقم العمارة، الدور)</label><input id="modalDetailedAddress" type="text" placeholder="مثال: المعادي - شارع 9 - عمارة 14 - الدور التاني" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-purple-600" /></div>
-        <div class="flex items-center justify-between gap-2"><span class="text-[11px] text-slate-500">رابط الخريطة سيتولد تلقائيًا بعد تحديد الموقع.</span><a id="previewMapLink" href="#" target="_blank" rel="noopener" class="hidden text-xs font-bold text-indigo-600 underline">معاينة الموقع</a></div>
-      </div>
-
-      <div class="p-3.5 md:p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
-        <button type="button" onclick="closeMapModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200">إلغاء</button>
-        <button type="button" onclick="confirmLocationModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 md:px-5 py-2.5 rounded-xl text-xs font-bold shadow">
-          إرسال العنوان للبوت 📍
-        </button>
-      </div>
+      <p class="text-xs text-[var(--muted)]">© <span id="year"></span> Ahmed Fathy.</p>
+      <a href="#home" class="text-xs text-[var(--muted)] hover:text-[var(--text)] flex items-center gap-2">Back to top <i data-lucide="arrow-up" class="w-3.5 h-3.5"></i></a>
     </div>
-  </div>
+  </footer>
+  <button id="backTop" class="back-top fixed bottom-5 right-5 z-40 w-11 h-11 rounded-xl border border-[var(--line)] bg-[var(--panel)] backdrop-blur grid place-items-center text-[var(--text)] shadow-xl" aria-label="Back to top"><i data-lucide="arrow-up" class="w-4 h-4"></i></button>
 
   <script>
-    const SUPABASE_URL = 'https://jlaczyfdaxcdevcozcnx.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_vih4Lf_VGHooa_IxoicuCA_X0Bg2ESc';
-    const CHAT_STORAGE_KEY = 'topwash_persistent_chat_v1';
+    // Theme Switcher Logic
+    const themeToggle = document.getElementById('themeToggle');
+    const htmlEl = document.documentElement;
+    const metaThemeColor = document.getElementById('metaThemeColor');
 
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    let chatHistory = [];
-    let uiMessages = [];
-    let catalogCache = [];
-    let lastSharedLocationUrl = '';
-    let customerMapInstance = null;
-    let customerMapMarker = null;
-    let selectedCustomerCoordinates = null;
-    let requestInProgress = false;
-    let conversationSessionId = createSessionId();
-    let cachedWorkingModel = '';
-    let lastSubmittedInteractionId = null;
-
-    function createSessionId() {
-      return (crypto.randomUUID ? crypto.randomUUID() : `tw-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    }
-
-    function persistChatState() {
-      try {
-        localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({
-          sessionId: conversationSessionId,
-          chatHistory,
-          uiMessages,
-          lastSharedLocationUrl,
-          selectedCustomerCoordinates,
-          lastSubmittedInteractionId
-        }));
-      } catch (e) {
-        console.warn('Persist chat skipped:', e);
+    const setTheme = (isDark) => {
+      if (isDark) {
+        htmlEl.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        metaThemeColor.setAttribute('content', '#060913');
+      } else {
+        htmlEl.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        metaThemeColor.setAttribute('content', '#f5f8ff');
       }
+    };
+
+    // Initialize Theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      setTheme(true);
+    } else {
+      setTheme(false);
     }
 
-    function restoreChatState() {
-      try {
-        const raw = localStorage.getItem(CHAT_STORAGE_KEY);
-        if (!raw) return false;
-        const parsed = JSON.parse(raw);
-        if (!parsed || !Array.isArray(parsed.uiMessages) || !parsed.uiMessages.length) return false;
-        conversationSessionId = parsed.sessionId || createSessionId();
-        chatHistory = Array.isArray(parsed.chatHistory) ? parsed.chatHistory : [];
-        uiMessages = parsed.uiMessages;
-        lastSharedLocationUrl = parsed.lastSharedLocationUrl || '';
-        selectedCustomerCoordinates = parsed.selectedCustomerCoordinates || null;
-        lastSubmittedInteractionId = parsed.lastSubmittedInteractionId || null;
-
-        const box = document.getElementById('chatContainer');
-        box.innerHTML = '';
-        uiMessages.forEach(msg => appendMessageUI(msg.role, msg.text, false));
-        return true;
-      } catch {
-        return false;
-      }
-    }
-
-    function getGeminiKey() {
-      return (localStorage.getItem('GM_KEY') || '').trim();
-    }
-
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    function handleInputKeydown(e) {
-      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
-        e.preventDefault();
-        sendMessage(e);
-      }
-    }
-
-    function autoResizeInput(el) {
-      if (!el) return;
-      el.style.height = 'auto';
-      el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
-    }
-
-    async function logConversation(event) {
-      try {
-        await supabaseClient.from('conversation_logs').insert([{
-          session_id: conversationSessionId,
-          speaker: event.speaker || 'system',
-          message: String(event.message || '').slice(0, 12000),
-          event_type: event.event_type || 'message',
-          tool_name: event.tool_name || null,
-          tool_data: event.tool_data || null,
-          customer_name: event.customer_name || null,
-          customer_phone: normalizeEgyptianPhone(event.customer_phone) || null
-        }]);
-      } catch (e) { console.warn('Conversation log skipped:', e); }
-    }
-
-    function normalizeMapsUrl(raw) {
-      const value = String(raw || '').trim();
-      if (!value) return null;
-      if (!/^https?:\/\//i.test(value)) return null;
-      try {
-        const url = new URL(value);
-        const host = url.hostname.toLowerCase();
-        if (!(host === 'maps.app.goo.gl' || host.endsWith('google.com') || host.endsWith('goo.gl') || host === 'maps.google.com')) return null;
-        return url.href;
-      } catch { return null; }
-    }
-
-    function buildDirectionsUrl(lat, lng, fallbackUrl) {
-      const nLat = Number(lat);
-      const nLng = Number(lng);
-      if (Number.isFinite(nLat) && Number.isFinite(nLng)) {
-        return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${nLat},${nLng}`)}`;
-      }
-      return normalizeMapsUrl(fallbackUrl);
-    }
-
-    function getEgyptDateTime() {
-      const parts = new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit',
-        weekday: 'long', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
-      }).formatToParts(new Date());
-      const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
-      const arabicDay = new Intl.DateTimeFormat('ar-EG', {
-        timeZone: 'Africa/Cairo', weekday: 'long'
-      }).format(new Date());
-      return {
-        date: `${values.year}-${values.month}-${values.day}`,
-        day: arabicDay,
-        time: new Intl.DateTimeFormat('ar-EG', {
-          timeZone: 'Africa/Cairo', hour: 'numeric', minute: '2-digit', hour12: true
-        }).format(new Date())
-      };
-    }
-
-    function normalizeEgyptianPhone(value) {
-      let phone = String(value || '').replace(/[\s٠-٩]/g, ch => {
-        if (/^[٠-٩]$/.test(ch)) return String('٠١٢٣٤٥٦٧٨٩'.indexOf(ch));
-        return '';
-      }).replace(/[()\-]/g, '');
-      if (phone.startsWith('+20')) phone = '0' + phone.slice(3);
-      else if (phone.startsWith('20') && phone.length === 12) phone = '0' + phone.slice(2);
-      return /^01[0125]\d{8}$/.test(phone) ? phone : null;
-    }
-
-    function phoneValidationResult(value) {
-      const normalized = normalizeEgyptianPhone(value);
-      return normalized
-        ? { valid: true, phone: normalized }
-        : { valid: false, status: 'incomplete_or_invalid_phone', message: 'رقم الهاتف ناقص عن 11 رقم أو غير صحيح، يرجى مراجعة الرقم وإرساله كاملاً من 11 رقم.' };
-    }
-
-    function getNameParts(value) {
-      return String(value || '')
-        .trim()
-        .replace(/[^\p{L}\s]/gu, ' ')
-        .split(/\s+/)
-        .filter(Boolean);
-    }
-
-    function validateClientName(value) {
-      const parts = getNameParts(value);
-      if (parts.length < 2) {
-        return { valid: false, status: 'single_name_not_allowed', message: 'الاسم أحادي، يجب أن يرسل العميل الاسم ثنائي على الأقل.' };
-      }
-      return { valid: true, parts, normalizedName: parts.join(' ') };
-    }
-
-    // Arabic normalization & intent matching so diacritics, hamzas, ta marbuta, or singular/plural don't cause false "not available"
-    function normalizeArabicText(text) {
-      return String(text || '')
-        .toLowerCase()
-        .replace(/[\u064B-\u065F\u0670]/g, '') // remove tashkeel
-        .replace(/[أإآٱ]/g, 'ا')
-        .replace(/ى/g, 'ي')
-        .replace(/ة/g, 'ه')
-        .replace(/ؤ/g, 'و')
-        .replace(/ئ/g, 'ي')
-        .replace(/[^\p{L}\p{N}\s_]/gu, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
-
-    function tokenizeArabic(text) {
-      return normalizeArabicText(text)
-        .split(/[\s_]+/)
-        .filter(Boolean)
-        .map(tok => tok.length > 3 && tok.endsWith('ات') ? tok.slice(0, -2) : tok);
-    }
-
-    function matchCatalogItemsFromText(queryText, catalog) {
-      const normQuery = normalizeArabicText(queryText);
-      const queryTokens = tokenizeArabic(queryText);
-      if (!normQuery || !Array.isArray(catalog)) return [];
-
-      return catalog.filter(item => {
-        const normName = normalizeArabicText(item.item_name_ar);
-        const normKey = normalizeArabicText(item.item_key);
-        const nameTokens = tokenizeArabic(item.item_name_ar);
-        const keyTokens = tokenizeArabic(item.item_key);
-
-        if (normName && (normQuery.includes(normName) || normName.includes(normQuery))) return true;
-        if (normKey && queryTokens.includes(normKey)) return true;
-
-        return queryTokens.some(qt =>
-          qt.length >= 2 && (
-            nameTokens.some(nt => nt.includes(qt) || qt.includes(nt)) ||
-            keyTokens.some(kt => kt.includes(qt) || qt.includes(kt))
-          )
-        );
-      });
-    }
-
-    async function loadInitialCatalog() {
-      const { data } = await supabaseClient.from('services_catalog').select('*');
-      catalogCache = data || [];
-    }
-
-    function openMapModal() {
-      const modal = document.getElementById('mapModal');
-      modal.classList.remove('hidden'); modal.classList.add('flex');
-      setTimeout(() => {
-        if (!customerMapInstance) {
-          customerMapInstance = L.map('customerMap', { zoomControl: true }).setView([30.0444, 31.2357], 11);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(customerMapInstance);
-          customerMapInstance.on('click', e => setCustomerMapPoint(e.latlng.lat, e.latlng.lng, 'تم تحديد الموقع يدويًا.'));
-        }
-        customerMapInstance.invalidateSize();
-      }, 180);
-    }
-
-    function closeMapModal() {
-      document.getElementById('mapModal').classList.add('hidden');
-      document.getElementById('mapModal').classList.remove('flex');
-    }
-
-    function centerMapOnEgypt() {
-      if (customerMapInstance) customerMapInstance.setView([26.8206, 30.8025], 6);
-    }
-
-    function setCustomerMapPoint(lat, lng, statusText) {
-      selectedCustomerCoordinates = { latitude: Number(lat), longitude: Number(lng) };
-      const point = [selectedCustomerCoordinates.latitude, selectedCustomerCoordinates.longitude];
-      if (!customerMapMarker) {
-        customerMapMarker = L.marker(point, { draggable: true }).addTo(customerMapInstance);
-        customerMapMarker.on('dragend', () => {
-          const p = customerMapMarker.getLatLng();
-          setCustomerMapPoint(p.lat, p.lng, 'تم تحديث موقع العلامة.');
-        });
-      } else customerMapMarker.setLatLng(point);
-      customerMapInstance.setView(point, Math.max(customerMapInstance.getZoom(), 16));
-      document.getElementById('modalLatitude').value = selectedCustomerCoordinates.latitude.toFixed(7);
-      document.getElementById('modalLongitude').value = selectedCustomerCoordinates.longitude.toFixed(7);
-      const url = buildDirectionsUrl(selectedCustomerCoordinates.latitude, selectedCustomerCoordinates.longitude);
-      const link = document.getElementById('previewMapLink'); link.href = url; link.classList.remove('hidden');
-      document.getElementById('locationStatus').textContent = statusText || 'تم تحديد الموقع بنجاح.';
-      persistChatState();
-    }
-
-    function locateCustomerNow() {
-      const status = document.getElementById('locationStatus');
-      if (!navigator.geolocation) { status.textContent = 'المتصفح لا يدعم تحديد الموقع.'; return; }
-      status.textContent = 'جارٍ تحديد موقعك…';
-      navigator.geolocation.getCurrentPosition(pos => {
-        setCustomerMapPoint(pos.coords.latitude, pos.coords.longitude, 'تم تحديد موقعك بنجاح.');
-      }, err => {
-        status.textContent = 'تعذر تحديد الموقع تلقائيًا، يرجى التحديد من الخريطة يدويًا.';
-      }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
-    }
-
-    function confirmLocationModal() {
-      const address = document.getElementById('modalDetailedAddress').value.trim();
-      if (!selectedCustomerCoordinates) { alert('حدد موقعك أولاً من الخريطة.'); return; }
-      if (!address) { alert('اكتب العنوان التفصيلي.'); return; }
-      const { latitude, longitude } = selectedCustomerCoordinates;
-      lastSharedLocationUrl = buildDirectionsUrl(latitude, longitude);
-      persistChatState();
-      closeMapModal();
-      const input = document.getElementById('userInput');
-      input.value = `📍 عنواني بالتفصيل: ${address}\nإحداثيات موقعي: ${latitude}, ${longitude}\nرابط الاتجاهات: ${lastSharedLocationUrl}`;
-      autoResizeInput(input);
-      sendMessage(new Event('submit'));
-      document.getElementById('modalDetailedAddress').value = '';
-    }
-
-    function formatAdminDetails(summaryText, detailsText, orderMatchNote) {
-      const cleanSummary = String(summaryText || '').trim();
-      const cleanDetails = String(detailsText || '').trim();
-      const cleanOrderNote = String(orderMatchNote || '').trim();
-      const baseSummary = cleanSummary || cleanDetails;
-      const baseDetails = cleanDetails || cleanSummary;
-      const lines = [
-        `ملخص الشكوى: ${baseSummary}`,
-        `التفاصيل الموضحة: ${baseDetails}`
-      ];
-      if (cleanOrderNote) {
-        lines.push(`مطابقة الأوردر السابق: ${cleanOrderNote}`);
-      }
-      return lines.join('\n');
-    }
-
-    async function fetchCustomerBookingsByCriteria(phone, nameQuery) {
-      let query = supabaseClient.from('bookings').select('*').order('created_at', { ascending: false }).limit(10);
-      if (phone) {
-        query = query.eq('client_phone', phone);
-      } else if (nameQuery) {
-        query = query.ilike('client_name', `%${nameQuery}%`);
-      }
-      const { data, error } = await query;
-      return { data: data || [], error };
-    }
-
-    async function executeToolCall(call) {
-      const { name, args = {} } = call;
-
-      if (name === 'request_customer_location') {
-        openMapModal();
-        const result = { status: 'location_picker_opened', message: 'تم فتح خريطة تحديد الموقع للعميل.' };
-        await logConversation({
-          speaker: 'tool',
-          event_type: 'tool_call',
-          tool_name: name,
-          tool_data: { args, result },
-          message: `فتح خريطة تحديد الموقع للعميل`
-        });
-        return result;
-      }
-
-      if (name === 'calculate_cleaning_price') {
-        const { data: catalog } = await supabaseClient.from('services_catalog').select('*');
-        catalogCache = catalog || catalogCache;
-        let total = 0;
-        const details = [];
-        const missingItems = [];
-        for (const reqItem of (args.items || [])) {
-          let found = catalog?.find(c => normalizeArabicText(c.item_key) === normalizeArabicText(reqItem.item_key));
-          if (!found) {
-            const matched = matchCatalogItemsFromText(reqItem.item_key, catalog || []);
-            found = matched[0] || null;
-          }
-          if (found && Number.isFinite(Number(found.price))) {
-            const quantity = Number(reqItem.quantity) || 1;
-            const sub = Number(found.price) * quantity;
-            total += sub;
-            details.push(`${quantity} ${found.item_name_ar} (${sub} ج.م)`);
-          } else {
-            missingItems.push(reqItem.item_key);
-          }
-        }
-        const result = missingItems.length
-          ? { status: 'missing_catalog_items', missing_items: missingItems }
-          : { status: 'success', total_price: total, breakdown: details.join(' + ') };
-
-        await logConversation({
-          speaker: 'tool',
-          event_type: 'tool_call',
-          tool_name: name,
-          tool_data: { args, result },
-          message: `حساب السعر: ${result.breakdown || JSON.stringify(result)}`
-        });
-        return result;
-      }
-
-      if (name === 'check_schedule_by_area') {
-        const clientArea = (args.client_area || '').trim();
-        const normArea = normalizeArabicText(clientArea);
-        const { data: zones } = await supabaseClient.from('zones').select('*');
-        const matchedZone = zones?.find(z => (z.covered_areas || []).some(a => {
-          const na = normalizeArabicText(a);
-          return normArea.includes(na) || na.includes(normArea);
-        }));
-        const today = getEgyptDateTime().date;
-        let result;
-        if (!matchedZone) {
-          result = { status: 'available', message: 'متاح الحجز في الفترات المعتادة.' };
-        } else {
-          const { data: existingBookings } = await supabaseClient.from('bookings').select('booking_date, time_slot, area').eq('zone_id', matchedZone.id).gte('booking_date', today);
-          result = { status: 'matched_zone', zone_name: matchedZone.zone_name, team_current_bookings: existingBookings || [] };
-        }
-
-        await logConversation({
-          speaker: 'tool',
-          event_type: 'tool_call',
-          tool_name: name,
-          tool_data: { args, result },
-          message: `فحص المواعيد للمنطقة (${clientArea}): ${result.zone_name || result.message}`
-        });
-        return result;
-      }
-
-      if (name === 'submit_customer_interaction') {
-        const phoneNormalized = normalizeEgyptianPhone(args.customer_phone);
-        if (args.customer_phone && !phoneNormalized) {
-          return phoneValidationResult(args.customer_phone);
-        }
-
-        const cleanName = String(args.customer_name || '').trim() || 'عميل';
-        const cleanSubject = String(args.subject || '').trim() || 'شكوى أو طلب عميل';
-
-        const { data: prevBookings } = await fetchCustomerBookingsByCriteria(
-          phoneNormalized,
-          cleanName !== 'عميل' ? cleanName : ''
-        );
-        const latestBooking = (prevBookings && prevBookings[0]) || null;
-        const previousItemsSummary = latestBooking?.items_summary || '';
-        const combinedText = normalizeArabicText(`${cleanSubject} ${args.summary || ''} ${args.details || ''}`);
-
-        let orderMatchNote = '';
-        let serviceMismatch = false;
-        if (previousItemsSummary) {
-          const prevLower = normalizeArabicText(previousItemsSummary);
-          const mentionsMattress = /مرتب|مراتب/.test(combinedText);
-          const mentionsCarpet = /سجاد|سجاده/.test(combinedText);
-          const mentionsSofa = /انتريه|ركنه|صالون|كنب/.test(combinedText);
-
-          if (mentionsMattress && !/مرتب|مراتب/.test(prevLower)) {
-            serviceMismatch = true;
-            orderMatchNote = `الأوردر السابق المسجل للعميل كان (${previousItemsSummary}) بتاريخ ${latestBooking.booking_date || ''} ولم يتضمن مراتب.`;
-          } else if (mentionsCarpet && !/سجاد|سجاده/.test(prevLower)) {
-            serviceMismatch = true;
-            orderMatchNote = `الأوردر السابق المسجل للعميل كان (${previousItemsSummary}) بتاريخ ${latestBooking.booking_date || ''} ولم يتضمن سجاد.`;
-          } else if (mentionsSofa && !/انتريه|ركنه|صالون|كنب/.test(prevLower)) {
-            serviceMismatch = true;
-            orderMatchNote = `الأوردر السابق المسجل للعميل كان (${previousItemsSummary}) بتاريخ ${latestBooking.booking_date || ''} ولم يتضمن أنترية/صالون.`;
-          } else {
-            orderMatchNote = `مطابق للأوردر السابق (${previousItemsSummary}).`;
-          }
-        }
-
-        const formattedDetails = formatAdminDetails(args.summary, args.details, orderMatchNote);
-        const allowedCategories = [
-          'cleaning_complaint',
-          'technician_complaint',
-          'response_complaint',
-          'reschedule_request',
-          'callback_request',
-          'extra_request',
-          'general_note',
-          'other'
-        ];
-        const category = allowedCategories.includes(args.category) ? args.category : 'other';
-        const allowedPriorities = ['low', 'normal', 'high', 'urgent'];
-        const priority = allowedPriorities.includes(args.priority) ? args.priority : 'high';
-
-        const { data, error } = await supabaseClient
-          .from('customer_interactions')
-          .insert([{
-            customer_name: cleanName,
-            customer_phone: phoneNormalized || null,
-            category,
-            priority,
-            subject: cleanSubject,
-            details: formattedDetails,
-            status: 'new'
-          }])
-          .select()
-          .single();
-
-        if (!error && data?.id) {
-          lastSubmittedInteractionId = data.id;
-          persistChatState();
-        }
-
-        const result = error
-          ? { status: 'error', message: error.message }
-          : {
-              status: 'interaction_saved',
-              interaction_details: data,
-              previous_booking: latestBooking,
-              previous_items_summary: previousItemsSummary,
-              service_mismatch_with_last_order: serviceMismatch
-            };
-
-        await logConversation({
-          speaker: 'tool',
-          event_type: 'interaction_submitted',
-          tool_name: name,
-          tool_data: { args, result },
-          customer_name: cleanName,
-          customer_phone: phoneNormalized || null,
-          message: error
-            ? `خطأ أثناء تسجيل الشكوى/الطلب: ${error.message}`
-            : `تم تسجيل (${cleanSubject}) للعميل ${cleanName} في قائمة الشكاوى والطلبات`
-        });
-        return result;
-      }
-
-      if (name === 'append_interaction_note') {
-        const phoneNormalized = normalizeEgyptianPhone(args.customer_phone);
-        const nameQuery = String(args.customer_name || '').trim();
-        const noteBody = String(args.customer_note || args.note || '').trim();
-        if (!noteBody) {
-          return { status: 'error', message: 'لا يوجد نص ملاحظة من العميل لإضافته.' };
-        }
-
-        let targetInteraction = null;
-        if (args.interaction_id) {
-          const { data } = await supabaseClient
-            .from('customer_interactions')
-            .select('*')
-            .eq('id', args.interaction_id)
-            .single();
-          targetInteraction = data || null;
-        } else if (lastSubmittedInteractionId) {
-          const { data } = await supabaseClient
-            .from('customer_interactions')
-            .select('*')
-            .eq('id', lastSubmittedInteractionId)
-            .single();
-          targetInteraction = data || null;
-        }
-
-        if (!targetInteraction) {
-          let q = supabaseClient
-            .from('customer_interactions')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(5);
-          if (phoneNormalized) q = q.eq('customer_phone', phoneNormalized);
-          else if (nameQuery) q = q.ilike('customer_name', `%${nameQuery}%`);
-          const { data } = await q;
-          targetInteraction = (data && data[0]) || null;
-        }
-
-        if (!targetInteraction) {
-          return {
-            status: 'not_found',
-            message: 'لم يتم العثور على شكوى سابقة للعميل لإلحاق الملاحظة بها.'
-          };
-        }
-
-        const formattedCustomerNote = `ملاحظة من العميل: ${noteBody}`;
-        const existingNotes = String(targetInteraction.admin_notes || '').trim();
-        const updatedNotes = existingNotes
-          ? `${existingNotes}\n${formattedCustomerNote}`
-          : formattedCustomerNote;
-
-        const updates = {
-          admin_notes: updatedNotes,
-          updated_at: new Date().toISOString()
-        };
-        if (phoneNormalized && !targetInteraction.customer_phone) {
-          updates.customer_phone = phoneNormalized;
-        }
-        if (nameQuery && (!targetInteraction.customer_name || targetInteraction.customer_name === 'عميل')) {
-          updates.customer_name = nameQuery;
-        }
-
-        const { data: updated, error } = await supabaseClient
-          .from('customer_interactions')
-          .update(updates)
-          .eq('id', targetInteraction.id)
-          .select()
-          .single();
-
-        if (!error && updated?.id) {
-          lastSubmittedInteractionId = updated.id;
-          persistChatState();
-        }
-
-        const result = error
-          ? { status: 'error', message: error.message }
-          : { status: 'note_appended_to_existing_interaction', interaction_details: updated };
-
-        await logConversation({
-          speaker: 'tool',
-          event_type: 'interaction_note_appended',
-          tool_name: name,
-          tool_data: { args, result },
-          customer_name: updated?.customer_name || targetInteraction.customer_name,
-          customer_phone: updated?.customer_phone || targetInteraction.customer_phone,
-          message: error
-            ? `خطأ أثناء إضافة ملاحظة العميل: ${error.message}`
-            : `تم إلحاق ملاحظة العميل بنفس الشكوى (${updated.subject})`
-        });
-        return result;
-      }
-
-      if (name === 'lookup_customer_bookings') {
-        const phone = normalizeEgyptianPhone(args.client_phone);
-        const nameQuery = String(args.client_name || '').trim();
-        const { data, error } = await fetchCustomerBookingsByCriteria(phone, nameQuery);
-
-        let duplicateNameFound = false;
-        if (!error && nameQuery) {
-          const { data: sameNameRows } = await supabaseClient
-            .from('bookings')
-            .select('id, client_name, client_phone')
-            .ilike('client_name', `%${nameQuery}%`)
-            .limit(10);
-          const distinctPhones = new Set((sameNameRows || []).map(r => r.client_phone).filter(Boolean));
-          if ((sameNameRows || []).length > 0 && (!phone || (distinctPhones.size > 0 && !distinctPhones.has(phone)))) {
-            duplicateNameFound = true;
-          }
-        }
-
-        const result = error
-          ? { status: 'error', message: error.message }
-          : {
-              status: 'success',
-              bookings: data || [],
-              duplicate_name_found: duplicateNameFound,
-              message: duplicateNameFound
-                ? 'يوجد اسم مشابه مسجل بالفعل؛ يُفضل طلب الاسم ثلاثي للتأكيد وعدم التداخل.'
-                : undefined
-            };
-
-        await logConversation({
-          speaker: 'tool',
-          event_type: 'tool_call',
-          tool_name: name,
-          tool_data: { args, result },
-          customer_name: args.client_name || null,
-          customer_phone: phone || null,
-          message: `بحث عن حجوزات العميل (${phone || nameQuery || 'الأحدث'}): وُجد ${(data || []).length} حجز`
-        });
-        return result;
-      }
-
-      if (name === 'update_booking_schedule') {
-        const bookingId = args.booking_id;
-        const phone = normalizeEgyptianPhone(args.client_phone);
-        const nameQuery = String(args.client_name || '').trim();
-
-        let targetBooking = null;
-        if (bookingId) {
-          const { data } = await supabaseClient.from('bookings').select('*').eq('id', bookingId).single();
-          targetBooking = data || null;
-        } else {
-          let q = supabaseClient.from('bookings').select('*').order('created_at', { ascending: false }).limit(5);
-          if (phone) q = q.eq('client_phone', phone);
-          else if (nameQuery) q = q.ilike('client_name', `%${nameQuery}%`);
-          const { data } = await q;
-          targetBooking = (data && data[0]) || null;
-        }
-
-        if (!targetBooking) {
-          const resNotFound = { status: 'not_found', message: 'لم يتم العثور على حجز مطابق لتعديله.' };
-          await logConversation({
-            speaker: 'tool',
-            event_type: 'tool_call',
-            tool_name: name,
-            tool_data: { args, result: resNotFound },
-            message: resNotFound.message
-          });
-          return resNotFound;
-        }
-
-        const updates = {};
-        if (args.booking_date) updates.booking_date = String(args.booking_date).trim();
-        if (args.time_slot) updates.time_slot = String(args.time_slot).trim();
-        if (args.area) updates.area = String(args.area).trim();
-        if (args.detailed_address) updates.detailed_address = String(args.detailed_address).trim();
-        if (args.items_summary) updates.items_summary = String(args.items_summary).trim();
-        if (args.total_price !== undefined && Number.isFinite(Number(args.total_price))) updates.total_price = Number(args.total_price);
-
-        const { data: updated, error } = await supabaseClient
-          .from('bookings')
-          .update(updates)
-          .eq('id', targetBooking.id)
-          .select()
-          .single();
-
-        const result = error
-          ? { status: 'error', message: error.message }
-          : { status: 'updated_successfully', booking_details: updated };
-
-        await logConversation({
-          speaker: 'tool',
-          event_type: 'booking_updated',
-          tool_name: name,
-          tool_data: { args, result },
-          customer_name: updated?.client_name || targetBooking.client_name,
-          customer_phone: updated?.client_phone || targetBooking.client_phone,
-          message: error
-            ? `خطأ أثناء تعديل الحجز: ${error.message}`
-            : `تم تعديل موعد حجز (${updated.client_name}) إلى ${updated.booking_date} - ${updated.time_slot}`
-        });
-        return result;
-      }
-
-      if (name === 'update_booking_status') {
-        const bookingId = args.booking_id;
-        const phone = normalizeEgyptianPhone(args.client_phone);
-        const nameQuery = String(args.client_name || '').trim();
-        const allowedStatuses = ['confirmed', 'pending', 'cancelled', 'completed'];
-        const nextStatus = allowedStatuses.includes(args.status) ? args.status : 'pending';
-
-        let targetBooking = null;
-        if (bookingId) {
-          const { data } = await supabaseClient.from('bookings').select('*').eq('id', bookingId).single();
-          targetBooking = data || null;
-        } else {
-          let q = supabaseClient.from('bookings').select('*').order('created_at', { ascending: false }).limit(5);
-          if (phone) q = q.eq('client_phone', phone);
-          else if (nameQuery) q = q.ilike('client_name', `%${nameQuery}%`);
-          const { data } = await q;
-          targetBooking = (data && data[0]) || null;
-        }
-
-        if (!targetBooking) {
-          const resNotFound = { status: 'not_found', message: 'لم يتم العثور على حجز مطابق لتغيير حالته.' };
-          await logConversation({
-            speaker: 'tool',
-            event_type: 'tool_call',
-            tool_name: name,
-            tool_data: { args, result: resNotFound },
-            message: resNotFound.message
-          });
-          return resNotFound;
-        }
-
-        const { data: updated, error } = await supabaseClient
-          .from('bookings')
-          .update({ status: nextStatus })
-          .eq('id', targetBooking.id)
-          .select()
-          .single();
-
-        const result = error
-          ? { status: 'error', message: error.message }
-          : { status: 'status_updated', booking_details: updated };
-
-        await logConversation({
-          speaker: 'tool',
-          event_type: 'booking_status_updated',
-          tool_name: name,
-          tool_data: { args, result },
-          customer_name: updated?.client_name || targetBooking.client_name,
-          customer_phone: updated?.client_phone || targetBooking.client_phone,
-          message: error
-            ? `خطأ أثناء تغيير حالة الحجز: ${error.message}`
-            : `تم تغيير حالة حجز (${updated.client_name}) إلى: ${nextStatus}`
-        });
-        return result;
-      }
-
-      if (name === 'confirm_booking') {
-        const nameCheck = validateClientName(args.client_name);
-        if (!nameCheck.valid) {
-          return nameCheck;
-        }
-
-        const phoneCheck = phoneValidationResult(args.client_phone);
-        if (!phoneCheck.valid) return phoneCheck;
-
-        const { data: existingSameName } = await supabaseClient
-          .from('bookings')
-          .select('id, client_name, client_phone')
-          .ilike('client_name', nameCheck.normalizedName)
-          .limit(5);
-
-        const hasOtherPhoneSameName = (existingSameName || []).some(
-          row => row.client_phone && row.client_phone !== phoneCheck.phone
-        );
-        if (nameCheck.parts.length === 2 && hasOtherPhoneSameName && !args.allow_duplicate_two_part_name) {
-          return {
-            valid: false,
-            status: 'duplicate_two_part_name',
-            message: 'الاسم الثنائي ده مسجل لعميل آخر بالفعل؛ اطلب من العميل يكتب الاسم ثلاثي للتأكيد.'
-          };
-        }
-
-        const latVal = args.latitude !== undefined && args.latitude !== null && args.latitude !== ''
-          ? Number(args.latitude)
-          : (selectedCustomerCoordinates ? Number(selectedCustomerCoordinates.latitude) : null);
-        const lngVal = args.longitude !== undefined && args.longitude !== null && args.longitude !== ''
-          ? Number(args.longitude)
-          : (selectedCustomerCoordinates ? Number(selectedCustomerCoordinates.longitude) : null);
-
-        const finalLat = Number.isFinite(latVal) ? latVal : null;
-        const finalLng = Number.isFinite(lngVal) ? lngVal : null;
-        const finalMapsUrl = buildDirectionsUrl(finalLat, finalLng, args.maps_url || lastSharedLocationUrl);
-
-        const { data, error } = await supabaseClient.from('bookings').insert([{
-          client_name: nameCheck.normalizedName,
-          client_phone: phoneCheck.phone,
-          area: String(args.area).trim(),
-          detailed_address: args.detailed_address || null,
-          maps_url: finalMapsUrl,
-          latitude: finalLat,
-          longitude: finalLng,
-          booking_date: args.booking_date,
-          time_slot: args.time_slot,
-          items_summary: args.items_summary,
-          total_price: Number(args.total_price),
-          status: 'confirmed'
-        }]).select().single();
-
-        const result = error ? { status: 'error', message: error.message } : { status: 'booked_successfully', booking_details: data };
-        await logConversation({
-          speaker: 'tool',
-          event_type: 'booking_confirmed',
-          tool_name: name,
-          tool_data: { args, result },
-          customer_name: nameCheck.normalizedName,
-          customer_phone: phoneCheck.phone,
-          message: error ? `خطأ أثناء تأكيد الحجز: ${error.message}` : `تم تأكيد الحجز للعميل ${nameCheck.normalizedName} (${phoneCheck.phone}) - الإجمالي: ${args.total_price} ج.م`
-        });
-        return result;
-      }
-
-      return { status: 'success' };
-    }
-
-    function isTextChatModel(name) {
-      const clean = String(name || '').toLowerCase();
-      if (!clean.startsWith('gemini-')) return false;
-      return !/(tts|audio|imagen|veo|embedding|robotics|computer-use|live)/.test(clean);
-    }
-
-    async function discoverAvailableModels(apiKey) {
-      try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
-        const data = await res.json();
-        if (!res.ok || !Array.isArray(data.models)) return [];
-        return data.models
-          .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
-          .map(m => String(m.name || '').replace(/^models\//, ''))
-          .filter(isTextChatModel);
-      } catch {
-        return [];
-      }
-    }
-
-    async function sendGeminiRequestWithFallback(payload) {
-      const apiKey = getGeminiKey();
-      if (!apiKey) {
-        throw new Error('مفتاح Gemini API غير مضبوط. افتح صفحة الإدارة -> إعدادات الربط وأضف المفتاح.');
-      }
-
-      const preferred = [
-        cachedWorkingModel,
-        'gemini-2.5-flash',
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-lite'
-      ].filter(Boolean);
-
-      const discovered = await discoverAvailableModels(apiKey);
-      const candidates = [...new Set([...preferred, ...discovered])].filter(isTextChatModel);
-
-      let lastError = null;
-
-      for (let attempt = 0; attempt < 2; attempt++) {
-        for (const model of candidates) {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const data = await res.json();
-
-          if (!res.ok || data.error) {
-            const msg = data.error?.message || `HTTP ${res.status}`;
-            lastError = new Error(msg);
-            if (
-              res.status === 404 ||
-              res.status === 429 ||
-              res.status === 503 ||
-              /not found|not supported|quota|limit:\s*0|high demand|overloaded|unavailable|models\//i.test(msg)
-            ) {
-              if (cachedWorkingModel === model) cachedWorkingModel = '';
-              continue;
-            }
-            throw lastError;
-          }
-
-          if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-            cachedWorkingModel = model;
-            return data;
-          }
-          lastError = new Error('لم يرجع النموذج ردًا نصيًا صالحًا.');
-        }
-        if (attempt === 0) await sleep(1000);
-      }
-
-      throw lastError || new Error('تعذر الاتصال بنموذج Gemini.');
-    }
-
-    async function callGeminiAgent(latestUserText = '') {
-      if (!catalogCache.length) await loadInitialCatalog();
-      const egyptNow = getEgyptDateTime();
-      const catalogText = catalogCache.length
-        ? catalogCache.map(c => `- ${c.item_name_ar} (كود: ${c.item_key}): ${c.price} ج.م`).join('\n')
-        : 'لا توجد خدمات محملة حاليًا';
-
-      const matchedItems = matchCatalogItemsFromText(latestUserText, catalogCache);
-      const matchedHint = matchedItems.length
-        ? `\nتنبيه مطابقة ذكية للكلام الحالي للعميل: العميل يقصد على الأغلب الخدمة المسجلة (${matchedItems.map(m => `${m.item_name_ar} بسعر ${m.price} ج.م`).join(' أو ')}) حتى لو اختلف التشكيل أو الهمزات أو صيغة المفرد والجمع.`
-        : '';
-
-      const toolsDeclaration = [{
-        functionDeclarations: [
-          {
-            name: 'calculate_cleaning_price',
-            description: 'حساب التكلفة الإجمالية لتنظيف المفروشات.',
-            parameters: {
-              type: 'OBJECT',
-              properties: {
-                items: {
-                  type: 'ARRAY',
-                  items: {
-                    type: 'OBJECT',
-                    properties: {
-                      item_key: { type: 'STRING' },
-                      quantity: { type: 'NUMBER' }
-                    },
-                    required: ['item_key', 'quantity']
-                  }
-                }
-              },
-              required: ['items']
-            }
-          },
-          {
-            name: 'check_schedule_by_area',
-            description: 'فحص المواعيد حسب المنطقة.',
-            parameters: { type: 'OBJECT', properties: { client_area: { type: 'STRING' } }, required: ['client_area'] }
-          },
-          {
-            name: 'request_customer_location',
-            description: 'فتح الخريطة لتحديد موقع العميل.',
-            parameters: { type: 'OBJECT', properties: {} }
-          },
-          {
-            name: 'submit_customer_interaction',
-            description: 'تسجيل شكوى أو طلب توظيف أو اقتراح أو طلب جديد لأول مرة في قائمة الشكاوى والطلبات بالإدارة بعد التحقق من الأوردر السابق وصياغة عنوان واضح وملخص بسيط وتفاصيل مفهومة.',
-            parameters: {
-              type: 'OBJECT',
-              properties: {
-                customer_name: { type: 'STRING' },
-                customer_phone: { type: 'STRING' },
-                category: {
-                  type: 'STRING',
-                  enum: [
-                    'cleaning_complaint',
-                    'technician_complaint',
-                    'response_complaint',
-                    'reschedule_request',
-                    'callback_request',
-                    'extra_request',
-                    'general_note',
-                    'other'
-                  ]
-                },
-                priority: { type: 'STRING', enum: ['low', 'normal', 'high', 'urgent'] },
-                subject: { type: 'STRING', description: 'عنوان واضح ومباشر للشكوى أو الطلب أو التوظيف أو الاقتراح' },
-                summary: { type: 'STRING', description: 'ملخص بسيط ومفهوم في سطر أو سطرين' },
-                details: { type: 'STRING', description: 'تفاصيل واضحة ومرتبة ومفهومة للشخص المسؤول في الإدارة' }
-              },
-              required: ['subject', 'summary', 'details']
-            }
-          },
-          {
-            name: 'append_interaction_note',
-            description: 'إلحاق ملاحظة أو طلب متابعة أو موعد تواصل جديد بنفس الشكوى أو الطلب القائم للعميل بدلاً من إنشاء سجل جديد منفصل.',
-            parameters: {
-              type: 'OBJECT',
-              properties: {
-                interaction_id: { type: 'STRING' },
-                customer_name: { type: 'STRING' },
-                customer_phone: { type: 'STRING' },
-                customer_note: { type: 'STRING', description: 'نص ملاحظة العميل أو طلب المتابعة واضح ومفهوم' }
-              },
-              required: ['customer_note']
-            }
-          },
-          {
-            name: 'lookup_customer_bookings',
-            description: 'البحث عن حجوزات العميل الحالية والسابقة في قاعدة البيانات قبل التعديل أو الإلغاء أو التعليق أو التحقق من الأوردر السابق للعميل.',
-            parameters: {
-              type: 'OBJECT',
-              properties: {
-                client_phone: { type: 'STRING' },
-                client_name: { type: 'STRING' }
-              }
-            }
-          },
-          {
-            name: 'update_booking_schedule',
-            description: 'تعديل أو تأجيل موعد أو فترة أو تفاصيل حجز قائم بالفعل في قاعدة البيانات.',
-            parameters: {
-              type: 'OBJECT',
-              properties: {
-                booking_id: { type: 'STRING' },
-                client_phone: { type: 'STRING' },
-                client_name: { type: 'STRING' },
-                booking_date: { type: 'STRING', description: 'التاريخ الجديد بصيغة YYYY-MM-DD' },
-                time_slot: { type: 'STRING', description: 'الفترة الجديدة مثل: الفترة الصباحية أو الفترة المسائية' },
-                area: { type: 'STRING' },
-                detailed_address: { type: 'STRING' },
-                items_summary: { type: 'STRING' },
-                total_price: { type: 'NUMBER' }
-              }
-            }
-          },
-          {
-            name: 'update_booking_status',
-            description: 'تغيير حالة حجز قائم إلى ملغي (cancelled) أو معلق (pending) أو مؤكد (confirmed) أو مكتمل (completed).',
-            parameters: {
-              type: 'OBJECT',
-              properties: {
-                booking_id: { type: 'STRING' },
-                client_phone: { type: 'STRING' },
-                client_name: { type: 'STRING' },
-                status: { type: 'STRING', enum: ['confirmed', 'pending', 'cancelled', 'completed'] }
-              },
-              required: ['status']
-            }
-          },
-          {
-            name: 'confirm_booking',
-            description: 'تأكيد حجز جديد.',
-            parameters: {
-              type: 'OBJECT',
-              properties: {
-                client_name: { type: 'STRING' },
-                client_phone: { type: 'STRING' },
-                area: { type: 'STRING' },
-                detailed_address: { type: 'STRING' },
-                maps_url: { type: 'STRING' },
-                latitude: { type: 'NUMBER' },
-                longitude: { type: 'NUMBER' },
-                booking_date: { type: 'STRING' },
-                time_slot: { type: 'STRING' },
-                items_summary: { type: 'STRING' },
-                total_price: { type: 'NUMBER' }
-              },
-              required: ['client_name', 'client_phone', 'area', 'booking_date', 'time_slot', 'items_summary', 'total_price']
-            }
-          }
-        ]
-      }];
-
-      const systemInstruction = {
-        parts: [{
-          text: `أنت أحمد، موظف خدمة عملاء ومسؤول تشغيل في شركة Top Wash لتنظيف المفروشات في مصر. اليوم: ${egyptNow.day} الموافق ${egyptNow.date} والوقت ${egyptNow.time}.
-
-نطاق عملك والرد على المواضيع الخارجية:
-- أنت مخصص فقط للرد على استفسارات وحجوزات وتعديلات وإلغاءات وشكاوى واقتراحات وطلبات التوظيف الخاصة بشركة Top Wash لتنظيف المفروشات.
-- إذا سأل العميل أو فتح موضوعاً خارج نطاق الشغل (مثل أخبار، سياسة، رياضة، ترفيه، مسائل شخصية، أو أسئلة عامة لا تخص تنظيف المفروشات والحجوزات)، اعتذر له بشياكة ولطف ووضّح أنك موجود فقط للرد على الاستفسارات والطلبات داخل الشغل المكلف به في Top Wash، ثم وجّهه بلطف نحو الاستفسار عن الخدمات أو الأسعار أو حجز موعد تنظيف.
-
-فهم قصد العميل واختلاف الكتابة أو التشكيل أو الهمزات:
-- عند قراءة كلام العميل، افهم قصده بذكاء حتى لو اختلف التشكيل أو الهمزات أو الألف/الياء/التاء المربوطة أو المفرد والجمع أو العامية (مثلاً: «كنبه» أو «كنبة» أو «كنب»، «كراسي سفره» أو «كرسي سفرة»، «مرتبه» أو «مرتبة»). لا تقل أبداً إن الخدمة «غير متاحة» لمجرد اختلاف حرف أو همزة أو صيغة إذا كانت تقابل خدمة موجودة في قائمة الأسعار.
-${matchedHint}
-
-أسلوب كلامك:
-- اتكلم مصري عادي وطبيعي جداً كأنك موظف خدمة عملاء حقيقي بيكلم عميل، من غير أي كلمات عامية مصطنعة أو غريبة زي «باه» أو قوالب روبوتية متكررة.
-- عند الشكاوى (مثل أسلوب فني أو تأخير أو نتيجة تنظيف)، لا تقل «ألف سلامة» على أسلوب فني أو موقف غير صحي؛ عبّر عن أسفك واحترامك لتجربة العميل بشكل طبيعي ومباشر وهادئ من غير مبالغة أو دراما.
-- رد على قد كلام العميل ببساطة وود ووضوح، ولا تضغط عليه بكل أسئلة الحجز في رسالة واحدة لو لسه بيسأل أو بيبدأ كلام.
-- لا تستخدم رموز نجوم مزدوجة أو تنسيقات غريبة ولا تذكر أسماء أدوات أو قواعد بيانات أو أنظمة داخلية.
-
-قواعد الاسم ورقم الموبايل في الحجز والشكاوى والطلبات:
-- ركّز إن العميل يبعت الاسم ثنائي (اسمين على الأقل)، ولو بعت الاسم أحادي (اسم واحد بس) اطلب منه بلطف يبعت الاسم ثنائي ومش هينفع يتسجل أحادي.
-- لو العميل بعت اسم ثنائي وطلع في اسم تاني مسجل زيه (أو الأداة رجّعت duplicate_name_found أو duplicate_two_part_name)، اطلب من العميل يكتب الاسم ثلاثي عشان ميحصلش لخبطة.
-- لو لاحظت إن رقم الموبايل ناقص عن 11 رقم أو مش كامل أو الأداة رجّعت incomplete_or_invalid_phone، وضّح للعميل بلطف يراجع الرقم ويبعته كامل من 11 رقم.
-
-الخدمات والأسعار الحالية:
-${catalogText}
-
-تعليمات تسجيل الشكاوى وطلبات التوظيف والاقتراحات والطلبات:
-- إذا عبّر العميل عن شكوى أو طلب توظيف أو اقتراح أو طلب جديد لأول مرة، خذ منه الاسم ورقم الموبايل لو لم يذكرهما، ثم استدعِ submit_customer_interaction مرة واحدة لتسجيلها في قائمة الشكاوى والطلبات.
-- إذا أرجعت submit_customer_interaction أن service_mismatch_with_last_order يساوي true أو وجود previous_items_summary مختلف عن القطعة التي يشتكي منها العميل، وضّح للعميل بلطف وشياكة إن الأوردر المسجل معانا كان (اذكر الخدمة الفعلية من previous_items_summary) وأنه قد يكون تعامل على القطعة الأخرى مع جهة أخرى، مع تأكيد تسجيل ملاحظته للإدارة للمراجعة.
-- إذا أضاف العميل بعد ذلك ملاحظة أو طلب متابعة بخصوص نفس الشكوى أو الطلب، استدعِ append_interaction_note لإلحاق ملاحظة العميل بنفس السجل القائم ولا تستدعِ submit_customer_interaction مرة أخرى.
-- لا تنسخ كلام العميل حرفياً كما هو؛ اكتب subject كعنوان واضح ومباشر، واكتب summary كملخص بسيط ومفهوم، واكتب details بشكل مرتب وواضح ومفهوم للشخص المسؤول في الإدارة.
-- لا تؤكد أن الشكوى أو الطلب أو الملاحظة تم تسجيلها إلا بعد نجاح تنفيذ الأداة فعلياً.
-
-تعليمات التحكم في الحجوزات واللوكيشن:
-- أنت مسؤول كامل مثل موظف الحجوزات: إذا طلب العميل تأجيل/تغيير ميعاد أو فترة، أو إلغاء حجز، أو تعليق حجز، يجب أن تستدعي أولاً lookup_customer_bookings لمعرفة الحجز الحالي، ثم تنفذ التعديل الفعلي في قاعدة البيانات عبر update_booking_schedule أو update_booking_status (بحالة cancelled للإلغاء أو pending للتعليق)، ولا تؤكد للعميل أن التعديل أو الإلغاء تم إلا بعد نجاح تنفيذ الأداة فعلياً.
-- عند تأكيد الحجز الجديد عبر confirm_booking، احرص على تمرير latitude وlongitude وmaps_url إذا أرسل العميل موقعه الحالي أو من الخريطة.`
-        }]
-      };
-
-      let data = await sendGeminiRequestWithFallback({
-        system_instruction: systemInstruction,
-        contents: chatHistory,
-        tools: toolsDeclaration
-      });
-
-      let candidate = data.candidates[0];
-      let modelParts = candidate.content.parts || [];
-
-      while (modelParts.some(p => p.functionCall)) {
-        chatHistory.push({ role: 'model', parts: modelParts });
-        const functionResponsesParts = [];
-        for (const part of modelParts) {
-          if (part.functionCall) {
-            const toolResult = await executeToolCall(part.functionCall);
-            functionResponsesParts.push({
-              functionResponse: { name: part.functionCall.name, response: toolResult }
-            });
-          }
-        }
-        chatHistory.push({ role: 'user', parts: functionResponsesParts });
-        persistChatState();
-        data = await sendGeminiRequestWithFallback({
-          system_instruction: systemInstruction,
-          contents: chatHistory,
-          tools: toolsDeclaration
-        });
-        candidate = data.candidates[0];
-        modelParts = candidate.content.parts || [];
-      }
-
-      const finalText = modelParts.map(p => p.text || '').join('\n').trim();
-      chatHistory.push({ role: 'model', parts: [{ text: finalText }] });
-      persistChatState();
-      return finalText;
-    }
-
-    function appendMessageUI(role, text, saveToStorage = true) {
-      const box = document.getElementById('chatContainer');
-      const wrapper = document.createElement('div');
-      const isUser = role === 'user';
-      wrapper.className = isUser ? 'flex items-start justify-end gap-2' : 'flex items-start gap-2.5';
-
-      if (!isUser) {
-        const avatar = document.createElement('div');
-        avatar.className = 'w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-purple-600 text-white flex items-center justify-center shrink-0 mt-1 text-[10px] font-extrabold shadow-xs';
-        avatar.textContent = 'أحمد';
-        wrapper.appendChild(avatar);
-      }
-
-      const content = document.createElement('div');
-      content.className = `flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[85%] min-w-0`;
-      const bubble = document.createElement('div');
-      bubble.className = isUser
-        ? 'message-text bg-gradient-to-l from-purple-600 to-indigo-600 text-white rounded-3xl rounded-tl-sm px-4 py-2.5 text-sm leading-relaxed w-fit max-w-full shadow-xs'
-        : 'message-text bg-slate-100/95 border border-slate-200/70 text-slate-800 rounded-3xl rounded-tr-sm px-4 py-3 text-sm leading-relaxed w-fit max-w-full shadow-2xs';
-      bubble.textContent = String(text ?? '');
-
-      content.appendChild(bubble);
-      wrapper.appendChild(content);
-      box.appendChild(wrapper);
-      box.scrollTop = box.scrollHeight;
-
-      if (saveToStorage) {
-        uiMessages.push({ role, text: String(text ?? '') });
-        persistChatState();
-      }
-    }
-
-    async function sendMessage(e) {
-      if (e && e.preventDefault) e.preventDefault();
-      const input = document.getElementById('userInput');
-      const btn = document.getElementById('sendBtn');
-      const text = input.value.trim();
-      if (!text || requestInProgress) return;
-
-      // Capture coordinates if customer pasted lat, lng in text
-      const coordMatch = text.match(/(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
-      if (coordMatch) {
-        const lat = Number(coordMatch[1]);
-        const lng = Number(coordMatch[2]);
-        if (Number.isFinite(lat) && Number.isFinite(lng)) {
-          selectedCustomerCoordinates = { latitude: lat, longitude: lng };
-          lastSharedLocationUrl = buildDirectionsUrl(lat, lng);
-          persistChatState();
-        }
-      }
-
-      requestInProgress = true;
-      input.value = '';
-      autoResizeInput(input);
-      appendMessageUI('user', text, true);
-      chatHistory.push({ role: 'user', parts: [{ text }] });
-      persistChatState();
-      await logConversation({ speaker: 'customer', event_type: 'message', message: text });
-
-      btn.disabled = true;
-      btn.innerHTML = `<span class="animate-pulse">يكتب... ✨</span>`;
-
-      try {
-        const reply = await callGeminiAgent(text);
-        appendMessageUI('model', reply, true);
-        await logConversation({ speaker: 'assistant', event_type: 'reply', message: reply });
-      } catch (err) {
-        const errMsg = `خطأ من جوجل: ` + err.message;
-        appendMessageUI('model', errMsg, true);
-        await logConversation({ speaker: 'system', event_type: 'error', message: err.message });
-      } finally {
-        requestInProgress = false;
-        btn.disabled = false;
-        btn.innerHTML = `<span>إرسال</span><i data-lucide="send" class="w-4 h-4"></i>`;
-        lucide.createIcons();
-        input.focus();
-      }
-    }
-
-    function showWelcomeMessage() {
-      appendMessageUI('model', 'أهلاً بحضرتك يا فندم ✨ معاك أحمد من Top Wash 🫧 أقدر أساعد حضرتك في إيه النهاردة؟', true);
-    }
-
-    function resetChat() {
-      chatHistory = [];
-      uiMessages = [];
-      lastSharedLocationUrl = '';
-      selectedCustomerCoordinates = null;
-      lastSubmittedInteractionId = null;
-      conversationSessionId = createSessionId();
-      try { localStorage.removeItem(CHAT_STORAGE_KEY); } catch {}
-      const input = document.getElementById('userInput');
-      if (input) {
-        input.value = '';
-        autoResizeInput(input);
-      }
-      document.getElementById('chatContainer').innerHTML = '';
-      showWelcomeMessage();
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-      if (!restoreChatState()) {
-        showWelcomeMessage();
-      }
-      loadInitialCatalog();
+    themeToggle.addEventListener('click', () => {
+      const isDark = !htmlEl.classList.contains('dark');
+      setTheme(isDark);
     });
+
+    // Icons
+    if (window.lucide) lucide.createIcons();
+
+    // Current year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Mobile navigation
+    const menuToggle = document.getElementById('menuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    menuToggle.addEventListener('click', () => {
+      const isOpen = mobileMenu.classList.toggle('open');
+      menuToggle.setAttribute('aria-expanded', String(isOpen));
+      menuToggle.innerHTML = isOpen ? '<i data-lucide="x"></i>' : '<i data-lucide="menu"></i>';
+      if (window.lucide) lucide.createIcons();
+    });
+    mobileMenu.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
+      mobileMenu.classList.remove('open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+      menuToggle.innerHTML = '<i data-lucide="menu"></i>';
+      if (window.lucide) lucide.createIcons();
+    }));
+
+    // Scroll reveal
+    const revealObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // Active navigation + back to top
+    const sections = [...document.querySelectorAll('main section[id]')];
+    const navLinks = [...document.querySelectorAll('.nav-link')];
+    const backTop = document.getElementById('backTop');
+    const updateOnScroll = () => {
+      const marker = window.scrollY + 150;
+      let current = 'home';
+      sections.forEach(section => { if (marker >= section.offsetTop) current = section.id; });
+      navLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === '#' + current));
+      backTop.classList.toggle('show', window.scrollY > 500);
+    };
+    window.addEventListener('scroll', updateOnScroll, { passive: true });
+    updateOnScroll();
+    backTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
   </script>
 </body>
 </html>
