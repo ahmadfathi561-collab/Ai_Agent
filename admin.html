@@ -396,6 +396,24 @@
 
     let supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    async function loadSharedConfigFromSupabase() {
+      try {
+        const { data } = await supabaseClient
+          .from('app_settings')
+          .select('setting_key, setting_value')
+          .in('setting_key', ['GM_KEY']);
+        if (Array.isArray(data)) {
+          const gmRow = data.find(r => r.setting_key === 'GM_KEY');
+          if (gmRow && gmRow.setting_value && gmRow.setting_value.trim()) {
+            GEMINI_KEY = gmRow.setting_value.trim();
+            localStorage.setItem('GM_KEY', GEMINI_KEY);
+          }
+        }
+      } catch (e) {
+        console.warn('Shared config load skipped:', e);
+      }
+    }
+
     function isUserInteractingWithFormOrInput() {
       const active = document.activeElement;
       if (!active) return false;
@@ -807,8 +825,11 @@
       closeSidebar();
     }
 
-    function toggleConfigModal() {
+    async function toggleConfigModal() {
       const modal = document.getElementById('configModal');
+      if (modal.classList.contains('hidden')) {
+        await loadSharedConfigFromSupabase();
+      }
       document.getElementById('cfgSupabaseUrl').value = SUPABASE_URL;
       document.getElementById('cfgSupabaseKey').value = SUPABASE_KEY;
       document.getElementById('cfgGeminiKey').value = GEMINI_KEY;
@@ -816,7 +837,7 @@
       modal.classList.toggle('flex');
     }
 
-    function saveConfig() {
+    async function saveConfig() {
       SUPABASE_URL = document.getElementById('cfgSupabaseUrl').value.trim();
       SUPABASE_KEY = document.getElementById('cfgSupabaseKey').value.trim();
       GEMINI_KEY   = document.getElementById('cfgGeminiKey').value.trim();
@@ -826,12 +847,24 @@
       localStorage.setItem('GM_KEY', GEMINI_KEY);
 
       supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      const { error } = await supabaseClient
+        .from('app_settings')
+        .upsert([{ setting_key: 'GM_KEY', setting_value: GEMINI_KEY, updated_at: new Date().toISOString() }], { onConflict: 'setting_key' });
+
+      if (error) {
+        showToast('تم الحفظ محلياً لكن تعذر المزامنة مع السيرفر: ' + error.message, 'error');
+      } else {
+        showToast('تم حفظ الإعدادات ومزامنتها لجميع الأجهزة بنجاح', 'success');
+      }
+
       toggleConfigModal();
       fetchAllData();
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       lucide.createIcons();
+      await loadSharedConfigFromSupabase();
       fetchAllData(false);
       setInterval(() => fetchAllData(true), 5000);
     });
