@@ -157,8 +157,8 @@
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://jlaczyfdaxcdevcozcnx.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_vih4Lf_VGHooa_IxoicuCA_X0Bg2ESc';
+    const SUPABASE_URL = localStorage.getItem('SB_URL') || 'https://jlaczyfdaxcdevcozcnx.supabase.co';
+    const SUPABASE_KEY = localStorage.getItem('SB_KEY') || 'sb_publishable_vih4Lf_VGHooa_IxoicuCA_X0Bg2ESc';
     const CHAT_STORAGE_KEY = 'topwash_persistent_chat_v1';
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -171,8 +171,9 @@
     let selectedCustomerCoordinates = null;
     let requestInProgress = false;
     let conversationSessionId = createSessionId();
-    let cachedWorkingModel = '';
+    let cachedWorkingModel = localStorage.getItem('TW_WORKING_MODEL') || 'gemini-2.5-flash';
     let lastSubmittedInteractionId = null;
+    let remoteGeminiKey = '';
 
     function createSessionId() {
       return (crypto.randomUUID ? crypto.randomUUID() : `tw-${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -215,8 +216,28 @@
       }
     }
 
+    async function syncSharedSettings(forceRefresh = false) {
+      if (!forceRefresh && remoteGeminiKey) return remoteGeminiKey;
+      try {
+        const { data } = await supabaseClient
+          .from('app_settings')
+          .select('setting_key, setting_value')
+          .in('setting_key', ['GM_KEY']);
+        if (Array.isArray(data)) {
+          const gmRow = data.find(r => r.setting_key === 'GM_KEY');
+          if (gmRow && gmRow.setting_value && gmRow.setting_value.trim()) {
+            remoteGeminiKey = gmRow.setting_value.trim();
+            try { localStorage.setItem('GM_KEY', remoteGeminiKey); } catch {}
+          }
+        }
+      } catch (e) {
+        console.warn('Shared settings sync skipped:', e);
+      }
+      return remoteGeminiKey || (localStorage.getItem('GM_KEY') || '').trim();
+    }
+
     function getGeminiKey() {
-      return (localStorage.getItem('GM_KEY') || '').trim();
+      return (remoteGeminiKey || localStorage.getItem('GM_KEY') || '').trim();
     }
 
     function sleep(ms) {
@@ -323,11 +344,10 @@
       return { valid: true, parts, normalizedName: parts.join(' ') };
     }
 
-    // Arabic normalization & intent matching so diacritics, hamzas, ta marbuta, or singular/plural don't cause false "not available"
     function normalizeArabicText(text) {
       return String(text || '')
         .toLowerCase()
-        .replace(/[\u064B-\u065F\u0670]/g, '') // remove tashkeel
+        .replace(/[\u064B-\u065F\u0670]/g, '')
         .replace(/[أإآٱ]/g, 'ا')
         .replace(/ى/g, 'ي')
         .replace(/ة/g, 'ه')
@@ -473,7 +493,7 @@
       if (name === 'request_customer_location') {
         openMapModal();
         const result = { status: 'location_picker_opened', message: 'تم فتح خريطة تحديد الموقع للعميل.' };
-        await logConversation({
+        logConversation({
           speaker: 'tool',
           event_type: 'tool_call',
           tool_name: name,
@@ -508,7 +528,7 @@
           ? { status: 'missing_catalog_items', missing_items: missingItems }
           : { status: 'success', total_price: total, breakdown: details.join(' + ') };
 
-        await logConversation({
+        logConversation({
           speaker: 'tool',
           event_type: 'tool_call',
           tool_name: name,
@@ -535,7 +555,7 @@
           result = { status: 'matched_zone', zone_name: matchedZone.zone_name, team_current_bookings: existingBookings || [] };
         }
 
-        await logConversation({
+        logConversation({
           speaker: 'tool',
           event_type: 'tool_call',
           tool_name: name,
@@ -628,7 +648,7 @@
               service_mismatch_with_last_order: serviceMismatch
             };
 
-        await logConversation({
+        logConversation({
           speaker: 'tool',
           event_type: 'interaction_submitted',
           tool_name: name,
@@ -719,7 +739,7 @@
           ? { status: 'error', message: error.message }
           : { status: 'note_appended_to_existing_interaction', interaction_details: updated };
 
-        await logConversation({
+        logConversation({
           speaker: 'tool',
           event_type: 'interaction_note_appended',
           tool_name: name,
@@ -762,7 +782,7 @@
                 : undefined
             };
 
-        await logConversation({
+        logConversation({
           speaker: 'tool',
           event_type: 'tool_call',
           tool_name: name,
@@ -793,7 +813,7 @@
 
         if (!targetBooking) {
           const resNotFound = { status: 'not_found', message: 'لم يتم العثور على حجز مطابق لتعديله.' };
-          await logConversation({
+          logConversation({
             speaker: 'tool',
             event_type: 'tool_call',
             tool_name: name,
@@ -822,7 +842,7 @@
           ? { status: 'error', message: error.message }
           : { status: 'updated_successfully', booking_details: updated };
 
-        await logConversation({
+        logConversation({
           speaker: 'tool',
           event_type: 'booking_updated',
           tool_name: name,
@@ -857,7 +877,7 @@
 
         if (!targetBooking) {
           const resNotFound = { status: 'not_found', message: 'لم يتم العثور على حجز مطابق لتغيير حالته.' };
-          await logConversation({
+          logConversation({
             speaker: 'tool',
             event_type: 'tool_call',
             tool_name: name,
@@ -878,7 +898,7 @@
           ? { status: 'error', message: error.message }
           : { status: 'status_updated', booking_details: updated };
 
-        await logConversation({
+        logConversation({
           speaker: 'tool',
           event_type: 'booking_status_updated',
           tool_name: name,
@@ -945,7 +965,7 @@
         }]).select().single();
 
         const result = error ? { status: 'error', message: error.message } : { status: 'booked_successfully', booking_details: data };
-        await logConversation({
+        logConversation({
           speaker: 'tool',
           event_type: 'booking_confirmed',
           tool_name: name,
@@ -968,7 +988,9 @@
 
     async function discoverAvailableModels(apiKey) {
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models`, {
+          headers: { 'x-goog-api-key': apiKey }
+        });
         const data = await res.json();
         if (!res.ok || !Array.isArray(data.models)) return [];
         return data.models
@@ -980,31 +1002,47 @@
       }
     }
 
+    function buildFastRequestBody(payload, model) {
+      const body = { ...payload };
+      if (/^gemini-2\.5-/i.test(model)) {
+        body.generationConfig = {
+          ...(payload.generationConfig || {}),
+          thinkingConfig: { thinkingBudget: 0 }
+        };
+      }
+      return body;
+    }
+
     async function sendGeminiRequestWithFallback(payload) {
-      const apiKey = getGeminiKey();
+      let apiKey = getGeminiKey();
+      if (!apiKey) {
+        apiKey = await syncSharedSettings(true);
+      }
       if (!apiKey) {
         throw new Error('مفتاح Gemini API غير مضبوط. افتح صفحة الإدارة -> إعدادات الربط وأضف المفتاح.');
       }
 
-      const preferred = [
+      const fastDefaults = [
         cachedWorkingModel,
         'gemini-2.5-flash',
         'gemini-2.0-flash',
         'gemini-2.0-flash-lite'
       ].filter(Boolean);
 
-      const discovered = await discoverAvailableModels(apiKey);
-      const candidates = [...new Set([...preferred, ...discovered])].filter(isTextChatModel);
-
+      let candidates = [...new Set(fastDefaults)].filter(isTextChatModel);
+      let usedDiscovery = false;
       let lastError = null;
 
-      for (let attempt = 0; attempt < 2; attempt++) {
+      for (let round = 0; round < 2; round++) {
         for (const model of candidates) {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
           const res = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey
+            },
+            body: JSON.stringify(buildFastRequestBody(payload, model))
           });
           const data = await res.json();
 
@@ -1017,19 +1055,40 @@
               res.status === 503 ||
               /not found|not supported|quota|limit:\s*0|high demand|overloaded|unavailable|models\//i.test(msg)
             ) {
-              if (cachedWorkingModel === model) cachedWorkingModel = '';
+              if (cachedWorkingModel === model) {
+                cachedWorkingModel = '';
+                try { localStorage.removeItem('TW_WORKING_MODEL'); } catch {}
+              }
               continue;
+            }
+            if (/API key not valid/i.test(msg)) {
+              const refreshedKey = await syncSharedSettings(true);
+              if (refreshedKey && refreshedKey !== apiKey) {
+                apiKey = refreshedKey;
+                continue;
+              }
             }
             throw lastError;
           }
 
           if (data.candidates && data.candidates[0] && data.candidates[0].content) {
             cachedWorkingModel = model;
+            try { localStorage.setItem('TW_WORKING_MODEL', model); } catch {}
             return data;
           }
           lastError = new Error('لم يرجع النموذج ردًا نصيًا صالحًا.');
         }
-        if (attempt === 0) await sleep(1000);
+
+        if (!usedDiscovery) {
+          usedDiscovery = true;
+          const discovered = await discoverAvailableModels(apiKey);
+          const extra = discovered.filter(m => !candidates.includes(m));
+          if (extra.length) {
+            candidates = extra;
+            continue;
+          }
+        }
+        break;
       }
 
       throw lastError || new Error('تعذر الاتصال بنموذج Gemini.');
@@ -1305,7 +1364,6 @@ ${catalogText}
       const text = input.value.trim();
       if (!text || requestInProgress) return;
 
-      // Capture coordinates if customer pasted lat, lng in text
       const coordMatch = text.match(/(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
       if (coordMatch) {
         const lat = Number(coordMatch[1]);
@@ -1323,7 +1381,7 @@ ${catalogText}
       appendMessageUI('user', text, true);
       chatHistory.push({ role: 'user', parts: [{ text }] });
       persistChatState();
-      await logConversation({ speaker: 'customer', event_type: 'message', message: text });
+      logConversation({ speaker: 'customer', event_type: 'message', message: text });
 
       btn.disabled = true;
       btn.innerHTML = `<span class="animate-pulse">يكتب... ✨</span>`;
@@ -1331,11 +1389,11 @@ ${catalogText}
       try {
         const reply = await callGeminiAgent(text);
         appendMessageUI('model', reply, true);
-        await logConversation({ speaker: 'assistant', event_type: 'reply', message: reply });
+        logConversation({ speaker: 'assistant', event_type: 'reply', message: reply });
       } catch (err) {
         const errMsg = `خطأ من جوجل: ` + err.message;
         appendMessageUI('model', errMsg, true);
-        await logConversation({ speaker: 'system', event_type: 'error', message: err.message });
+        logConversation({ speaker: 'system', event_type: 'error', message: err.message });
       } finally {
         requestInProgress = false;
         btn.disabled = false;
@@ -1371,6 +1429,7 @@ ${catalogText}
       if (!restoreChatState()) {
         showWelcomeMessage();
       }
+      syncSharedSettings(true);
       loadInitialCatalog();
     });
   </script>
